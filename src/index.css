@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Kanit:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 150 10% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 10% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 10% 15%;
+
+    --primary: 153 100% 20%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 122 39% 49%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 120 36% 95%;
+    --muted-foreground: 150 5% 45%;
+
+    --accent: 120 52% 93%;
+    --accent-foreground: 153 100% 20%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 140 10% 90%;
+    --input: 140 10% 90%;
+    --ring: 153 100% 20%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 150 5% 40%;
+    --sidebar-primary: 153 100% 20%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 120 52% 93%;
+    --sidebar-accent-foreground: 153 100% 20%;
+    --sidebar-border: 140 10% 92%;
+    --sidebar-ring: 153 100% 20%;
+
+    --ku-green: 153 100% 20%;
+    --ku-soft-green: 122 39% 49%;
+    --ku-light-green: 120 52% 93%;
+  }
+
+  .dark {
+    --background: 160 15% 8%;
+    --foreground: 140 10% 90%;
+
+    --card: 160 12% 11%;
+    --card-foreground: 140 10% 90%;
+
+    --popover: 160 12% 11%;
+    --popover-foreground: 140 10% 90%;
+
+    --primary: 153 80% 40%;
+    --primary-foreground: 160 15% 8%;
+
+    --secondary: 122 30% 38%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 160 10% 16%;
+    --muted-foreground: 150 5% 55%;
+
+    --accent: 155 20% 16%;
+    --accent-foreground: 153 60% 55%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 160 10% 18%;
+    --input: 160 10% 18%;
+    --ring: 153 80% 40%;
+
+    --sidebar-background: 160 12% 10%;
+    --sidebar-foreground: 150 5% 55%;
+    --sidebar-primary: 153 80% 40%;
+    --sidebar-primary-foreground: 160 15% 8%;
+    --sidebar-accent: 155 20% 16%;
+    --sidebar-accent-foreground: 153 60% 55%;
+    --sidebar-border: 160 10% 16%;
+    --sidebar-ring: 153 80% 40%;
+
+    --ku-green: 153 80% 40%;
+    --ku-soft-green: 122 30% 38%;
+    --ku-light-green: 155 20% 16%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+  .card-hover:hover {
+    @apply -translate-y-1;
+    box-shadow: 0 8px 30px -8px hsl(var(--primary) / 0.15);
+  }
+  .green-glow:hover {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.12);
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Micro-interactions: buttons & cards */
+button, [role="button"] {
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+button:hover, [role="button"]:hover {
+  transform: scale(1.02);
+}
+button:active, [role="button"]:active {
+  transform: scale(0.97);
+}
+
+.card-interactive {
+  @apply transition-all duration-200 ease-out;
+}
+.card-interactive:hover {
+  @apply -translate-y-0.5;
+  box-shadow: 0 6px 20px -6px hsl(var(--primary) / 0.12);
+}
+.card-interactive:active {
+  @apply translate-y-0;
+  transform: scale(0.99);
+}

@@ -1,0 +1,32 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a0210" />
+      <stop offset="100%" stop-color="#660028" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9e003e" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#660028" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Ornaments -->
+  <circle cx="100" cy="80" r="160" fill="#ffffff" opacity="0.04" />
+  <circle cx="1100" cy="550" r="280" fill="#ffffff" opacity="0.04" />
+  <path d="M 1200 0 L 1000 0 L 1200 200 Z" fill="#ffffff" opacity="0.02" />
+  <circle cx="200" cy="500" r="80" fill="#ffffff" opacity="0.02" />
+
+  <!-- Logo/Icon Square -->
+  <rect x="520" y="140" width="160" height="160" rx="40" fill="#ffffff"/>
+  <text x="600" y="250" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="90" font-weight="900" fill="#660028">KU</text>
+
+  <!-- Main Title -->
+  <text x="600" y="420" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="80" fill="#ffffff">KULifeOS</text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="490" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="32" fill="#d8a0b8" letter-spacing="1">Teacher Portal</text>
+</svg>

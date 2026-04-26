@@ -1,0 +1,2039 @@
+Script started on Thu Apr  2 12:23:10 2026
+/opt/homebrew/Caskroom/miniforge/base/lib/python3.12/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.4.0) or chardet (7.2.0)/charset_normalizer (3.4.2) doesn't match a supported version!
+  warnings.warn(
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  node fix-settings.cjs[?2004l
+node:internal/modules/cjs/loader:1228
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/addeen/Desktop/code/supai-week2/aip/kulifeos/fix-settings.cjs'
+[90m    at Module._resolveFilename (node:internal/modules/cjs/loader:1225:15)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1051:27)[39m
+[90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:174:12)[39m
+[90m    at node:internal/main/run_main_module:28:49[39m {
+  code: [32m'MODULE_NOT_FOUND'[39m,
+  requireStack: []
+}
+
+Node.js v20.18.0
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  node fix-settings.cjs[?2004l
+Settings.tsx updated
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  node -e '[?2004l
+[0m[27m[24m[Jquote> [K[?2004hcconst fs = require("fs");[?2004l
+[0m[27m[24m[Jquote> [K[?2004hcconst path = require("path");[?2004l
+[0m[27m[24m[Jquote> [K[?2004hcconst emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu; [K[K[?2004l
+[0m[27m[24m[Jquote> [K[?2004hffunction walk(dir) {[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   let files = [];[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   for (const file of fs.readdirSync(dir)) {[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     const fullPath = path.join(dir, file);[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     if (fs.statSync(fullPath).isDirectory()) {[?2004l
+[0m[27m[24m[Jquote> [K[?2004h       files = files.concat(walk(fullPath));[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     } else if (fullPath.endsWith(".tsx") || fullPath.endsWith(".ts")) {[?2004l
+[0m[27m[24m[Jquote> [K[?2004h       files.push(fullPath);[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     }[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   }[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   return files;[?2004l
+[0m[27m[24m[Jquote> [K[?2004h}[?2004l
+[0m[27m[24m[Jquote> [K[?2004h[?2004l
+[0m[27m[24m[Jquote> [K[?2004hcconst files = walk("src");[?2004l
+[0m[27m[24m[Jquote> [K[?2004hllet found = false;[?2004l
+[0m[27m[24m[Jquote> [K[?2004hffor (const file of files) {[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   const content = fs.readFileSync(file, "utf8");[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   let match;[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   while ((match = emojiRegex.exec(content)) !== null) {[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     const lines = content.substring(0, match.index).split("\n");[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     console.log(`${file}:${lines.length}: ${lines[lines.length - 1] + mat [Kcch[0]}`);[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     found = true;[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   }[?2004l
+[0m[27m[24m[Jquote> [K[?2004h}[?2004l
+[0m[27m[24m[Jquote> [K[?2004hiif (!found) console.log("No emojis found!");[?2004l
+[0m[27m[24m[Jquote> [K[?2004h'[?2004l
+src/pages/Auth.tsx:435:                 { n: "4.9★
+src/pages/Auth.tsx:446:             ©
+src/pages/Landing.tsx:16:   { value: "4.9★
+src/pages/Landing.tsx:194:           ©
+src/pages/Settings.tsx:120:                     <SelectItem value="light">☀
+src/pages/Settings.tsx:121:                     <SelectItem value="dark">🌙
+src/pages/Settings.tsx:122:                     <SelectItem value="system">🖥
+src/pages/Settings.tsx:258:                         <SelectItem value="th">🇹
+src/pages/Settings.tsx:258:                         <SelectItem value="th">🇹🇭
+src/pages/Settings.tsx:271:                         <SelectItem value="light">☀
+src/pages/Settings.tsx:272:                         <SelectItem value="dark">🌙
+src/pages/Settings.tsx:273:                         <SelectItem value="system">🖥
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat << 'SCRIPT' > fix-more.cjs[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst fs = require("fs");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hllet auth = fs.readFileSync("src/pages/Auth.tsx", "utf8");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004haauth = auth.replace(/4\.9★/g, "4.9<Star className=\"h-3 w-3 inline text [K--yellow-500 fill-current\" />");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004haauth = auth.replace(/©/g, "&copy;");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hiif(!auth.includes("Star")) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   auth = auth.replace(/import\s+\{([^}]*)\}\s+from\s+["']lucide-react[" [K''];?/, (m, p1) => `import { ${p1.trim()}, Star } from "lucide-react";`);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hffs.writeFileSync("src/pages/Auth.tsx", auth);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hllet landing = fs.readFileSync("src/pages/Landing.tsx", "utf8");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hllanding = landing.replace(/4\.9★/g, "4.9<Star className=\"h-5 w-5 inlin [Kee text-yellow-500 fill-current\" />");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hllanding = landing.replace(/©/g, "&copy;");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hiif(!landing.includes("Star")) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   landing = landing.replace(/import\s+\{([^}]*)\}\s+from\s+["']lucide-r [Keeact["'];?/, (m, p1) => `import { ${p1.trim()}, Star } from "lucide-react";`);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hffs.writeFileSync("src/pages/Landing.tsx", landing);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hllet settings = fs.readFileSync("src/pages/Settings.tsx", "utf8");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hssettings = settingsconst fs = require("fs");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hllet [?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hsslet auth = fs.readFileSyceauth = auth.replace(/4\.9★/g, "4.9<Star clas [KssName=\"h-[7m<ffffffff>[27muth = auth.replace(/©/g, "&copy;");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hiif(!auth.includes("Star")) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   auth = auth.replace(/import\s+\{([^4\if(!auth.includes("Star")) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   auth />  auth = auth.replace(/impoe=}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hffs.writeFileSync("src/pages/Auth.tsx", auth);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hllet landing = fs.readFileSync("src/pages/Landing.tsx", "utf8");[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hllandin[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  node fix-more.cjs[?2004l
+Done fix-more
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  node -e '[?2004l
+[0m[27m[24m[Jquote> [K[?2004hcconst fs = require("fs");[?2004l
+[0m[27m[24m[Jquote> [K[?2004hcconst path = require("path");[?2004l
+[0m[27m[24m[Jquote> [K[?2004hcconst emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu; [K[K[?2004l
+[0m[27m[24m[Jquote> [K[?2004hffunction walk(dir) {[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   let files = [];[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   for (const f of fs.readdirSync(dir)) {[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     const p = path.join(dir, f);[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     if (fs.statSync(p).isDirectory()) files = files.concat(walk(p));[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     else if (p.endsWith(".tsx") || p.endsWith(".ts")) files.push(p);[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   }[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   return files;[?2004l
+[0m[27m[24m[Jquote> [K[?2004h}[?2004l
+[0m[27m[24m[Jquote> [K[?2004hllet found = 0;[?2004l
+[0m[27m[24m[Jquote> [K[?2004hffor (const f of walk("src")) {[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   const c = fs.readFileSync(f, "utf8");[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   const m = c.match(emojiRegex);[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   if (m) {[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     console.log(f, "has emojis");[?2004l
+[0m[27m[24m[Jquote> [K[?2004h     found++;[?2004l
+[0m[27m[24m[Jquote> [K[?2004h   }[?2004l
+[0m[27m[24m[Jquote> [K[?2004h}[?2004l
+[0m[27m[24m[Jquote> [K[?2004hiif (!found) console.log("No emojis found!");[?2004l
+[0m[27m[24m[Jquote> [K[?2004h'[?2004l
+No emojis found!
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  rm replace-emojis.cjs fix-settin [Kggs.cjs fix-more.cjs[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  ls -la fix* replace*[?2004l
+zsh: no matches found: fix*
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -rn "className=\\\"h-" src/ [Kppages/Auth.tsx[?2004l
+src/pages/Auth.tsx:65:        <Icon className="h-4 w-4" />
+src/pages/Auth.tsx:304:                  {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+src/pages/Auth.tsx:326:                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+src/pages/Auth.tsx:345:                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+src/pages/Auth.tsx:351:                  <ArrowRight className="h-4 w-4" />
+src/pages/Auth.tsx:384:                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+src/pages/Auth.tsx:388:                <>ยืนยันรหัสนิสิต <ArrowRight className="h-4 w-4" /></>
+src/pages/Auth.tsx:421:              <Sparkles className="h-3.5 w-3.5" />
+src/pages/Auth.tsx:435:                { n: <>4.9<Star className="h-3 w-3 ml-1 inline text-yellow-500 fill-current" /></>, label: "คะแนน" },
+src/pages/Auth.tsx:454:                {tab === "login" ? "ยินดีต้อนรับกลับมา <Hand className="h-5 w-5 inline ml-1" />" : "เริ่มต้นใช้งาน <GraduationCap className="h-5 w-5 inline ml-1" />"}
+src/pages/Auth.tsx:497:            <Sparkles className="h-3 w-3" />
+src/pages/Auth.tsx:501:            {tab === "login" ? "ยินดีต้อนรับกลับมา <Hand className="h-5 w-5 inline ml-1" />" : "เริ่มต้นการเดินทาง <GraduationCap className="h-5 w-5 inline ml-1" />"}
+src/pages/Auth.tsx:524:        <div className="h-6" />
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -rn "className=\\\"h-" src/ [Kppages/Dashboard.tsx[?2004l
+src/pages/Dashboard.tsx:32:              <p className="text-sm font-medium opacity-80">สวัสดี <Hand className="h-4 w-4 inline" /></p>
+src/pages/Dashboard.tsx:34:              <p className="mt-1.5 text-sm opacity-70">ทักษะของคุณกำลังเติบโต <Sparkles className="h-4 w-4 inline ml-1 text-yellow-500" /></p>
+src/pages/Dashboard.tsx:56:                <Sparkles className="h-6 w-6 text-primary" />
+src/pages/Dashboard.tsx:66:              <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground/50" />
+src/pages/Dashboard.tsx:73:              <Calendar className="h-4 w-4 text-primary" /> เดดไลน์
+src/pages/Dashboard.tsx:96:              <FolderKanban className="h-4 w-4 text-primary" /> โปรเจกต์
+src/pages/Dashboard.tsx:108:                      <svg className="h-12 w-12 -rotate-90" viewBox="0 0 48 48">
+src/pages/Dashboard.tsx:119:                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+src/pages/Dashboard.tsx:152:            <h2 className="text-2xl font-bold text-foreground">Welcome back, {userProfile.name.split(" ")[0]} <Hand className="h-5 w-5 inline ml-1" /></h2>
+src/pages/Dashboard.tsx:195:                      View Insight <ArrowRight className="h-4 w-4" />
+src/pages/Dashboard.tsx:203:                    <CardTitle className="flex items-center gap-2 text-base"><Calendar className="h-4 w-4 text-primary" /> Upcoming Deadlines</CardTitle>
+src/pages/Dashboard.tsx:221:                    <CardTitle className="flex items-center gap-2 text-base"><FolderKanban className="h-4 w-4 text-primary" /> Active Projects</CardTitle>
+src/pages/Dashboard.tsx:230:                        <Progress value={p.progress} className="h-2 bg-accent [&>div]:bg-primary" />
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -rn "Star" src/pages/Landin [Kgg.tsx[?2004l
+src/pages/Landing.tsx:4:import { Brain, Users, FolderKanban, TrendingUp, ArrowRight, Sparkles, Star, Star } from "lucide-react";
+src/pages/Landing.tsx:16:  { value: <span>4.9<Star className="h-4 w-4 ml-1 inline text-yellow-500 fill-current" /></span>, label: "คะแนน" },
+src/pages/Landing.tsx:168:              <Star className="h-3 w-3" /> สำหรับนิสิต KU ทุกคน
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -rn "radarData" src/pages/O [Knnboarding.tsx[?2004l
+src/pages/Onboarding.tsx:136:  radarData, generatedTags, isAnalyzing,
+src/pages/Onboarding.tsx:440:            <RadarChart data={radarData}>
+src/pages/Onboarding.tsx:497:  const [radarData, setRadarData] = useState<any[]>([]);
+src/pages/Onboarding.tsx:706:    toggleSkill, toggleInterest, addExperience, addProject, radarData, generatedTags, isAnalyzing,
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -B 5 -A 10 "handleAnalyze = [K"" src/pages/Onboarding.tsx[?2004l
+    } finally {
+      setIsParsingResume(false);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+    const rd = generateRadarData();
+    const tags = generateTags(data.selectedSkills, data.interests);
+    
+    // Save complete onboarding data before showing results
+    await saveProgress(4);
+    
+    setTimeout(() => {
+      setRadarData(rd);
+      setGeneratedTags(tags);
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat << 'EOF' >> src/lib/aiAnalyz [Kee.ts[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004heexport interface ProfileAnalysisResult {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   radarData: Array<{ skill: string; value: number; fullMark: 100 }>;[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   tags: string[];[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   analysis: string;[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst PROFILE_ANALYSIS_PROMPT = `You are an expert career counselor and [K  profiler.[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hII will pass you a JSON containing a user's profile data (name, faculty, [K  skills, interests, experiences, projects).[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hYYour task is to analyze this data and return ONLY strict JSON in the fo [Klllowing format, with NO code blocks, markdown mapping, or extra text.[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h{[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   "radarData": [[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     { "skill": "Topic 1", "value": <Number 0-100>, "fullMark": 100 },[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     ... exactly 5 to 6 core skill categories representing the user[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   ],[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   "tags": ["Tag1", "Tag2", ... 5 to 8 short career/skill tags],[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   "analysis": "<String: A paragraph in Thai (about 4-5 sentences) summa [Krrizing their strengths, what kind of person they are based on their profile, and [K  an encouraging closing message.>"[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hBBe realistic but encouraging. If data is sparse, make reasonable extrap [Koolations b[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004heexport interface ProfileAnalysisRest a  radarData: Array<{ skill: strin [Kgg; valro  tags: string[];[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   analysis: string;[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst PROFILE_ANALYSIS_PROmp  analysis: striE_}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst PROFILE_A  if I will pass you a JSON containing a user's profile  [Kddata (name, faculty, skills, roYour task is to analyze this data and return ONLY [K  strict JSON in the following format, with NO code blocks, markda"[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h{[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   "radarData": [[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     { "skill": "Topic 1", "value": <Number 0-100>, "fullMark": 100 },[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     ... exactly 5 to 6 core skill categories repr},[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       { "skill": om    ... exactly 5 to 6 core skill categories represe [Knnting the user[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  hu  ],[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   "tags": ["Tag1", "Tag2", ... 5 to 8 short career/skill tag[7m<ffffffff>[27m[7m<[27m[7mf[7mfffffff>[27m[K[1C"[7m<ffffffff>[27m[7m<ffffffff>[27m  "analysis": "<String: A paragraph in Thai (abou [Ktt 4-5 sentenc[7m<ffffffff>[27m[7m<ffffffff>[27m[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hBBe realistic but encouraging. If data is sparse, make reasonable extrap [Koolations b[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004heexport interface ProfileAnalysisRest a  radarData: Array<{ skill: strin [Kgg; valro  tags: string[];[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   ait fexport interface ProfileAnalysisRest a  radarData: Array<{ skill [K:: string; valro     analysis: string;[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst PROFILE_ANALYSIS_PROmp  analysis: striE_}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst PROFILE_A  if I wn"}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst PROFILE_Aody: [?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst PROFILE_A  if I will pass you a JSON co3n-{[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   "radarData": [[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     { "skill": "Topic 1", "value": <Number 0-100>, "fullMark": 100 },[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     ... exactly 5 to 6 core skill categories repr},[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       { "skill": om    ... exactly 5 to 6 core skill categories represe [Knntin   i    { "skill": ow    ... exactly 5 to 6 core skill categories repr},[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       { "skill": r      { "skill": om    ... exactly 5 to 6 core ski";  [Khhu  ],[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   "tags": ["Tag1", "Tag2", ... 5 to 8 short career/skill tag[7m<ffffffff>[27m[7m<[27m[7mf[7mfffffff>[27m[K[1C"[7m<ffffffff>[27m[7m<ffffffff>[27m  "analysst  "tagd [?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hBBe realistic but encouraging. If data is sparse, make reasonable extrap [Koolations b[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004heexport interface ProfileAnalysisRest a  radarDat taexport interface Pro [KffileAnalysisRest a  radarData: Array<{ skill: string; valro pe  ait fexport inte [Krrface ProfileAnalysisRest a  radarData: Array<{ skill: string; valro     anal  } [K[K[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst PROFILE_ANALYSIS_PROmp  analysis: striE_}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst PROFILE_A  if I wn"}[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hcconst PR[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  EOF[?2004l
+zsh: command not found: EOF
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004hEEOF[?2004l
+zsh: command not found: EOF
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  git checkout -- src/lib/aiAnalyz [Kee.ts[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  node appendAI.cjs[?2004l
+/Users/addeen/Desktop/code/supai-week2/aip/kulifeos/appendAI.cjs:82
+
+
+
+SyntaxError: Unexpected end of input
+[90m    at wrapSafe (node:internal/modules/cjs/loader:1378:20)[39m
+[90m    at Module._compile (node:internal/modules/cjs/loader:1428:41)[39m
+[90m    at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)[39m
+[90m    at Module.load (node:internal/modules/cjs/loader:1288:32)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1104:12)[39m
+[90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:174:12)[39m
+[90m    at node:internal/main/run_main_module:28:49[39m
+
+Node.js v20.18.0
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  node appendAI2.cjs[?2004l
+Appended
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  wc -l src/lib/aiAnalyze.ts[?2004l
+     136 src/lib/aiAnalyze.ts
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  rm -f appendAI.cjs appendAI2.cjs [K  && npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -rn "profileAnalysis" src[?2004l
+src/pages/Onboarding.tsx:735:          profileAnalysis: analysisResult,
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -rn "radarData" src[?2004l
+src/lib/aiAnalyze.ts:186:  radarData: Array<{ skill: string; value: number; fullMark: number }>;
+src/lib/aiAnalyze.ts:197:  "radarData": [
+src/lib/aiAnalyze.ts:215:- radarData MUST contain exactly the 5 static soft skill categories listed above.
+src/lib/aiAnalyze.ts:222:    radarData: [
+src/lib/aiAnalyze.ts:264:      radarData: Array.isArray(parsed.radarData) ? parsed.radarData : fallback.radarData,
+src/pages/Profile.tsx:29:const radarData = stored?.radarData ?? skillData;
+src/pages/Profile.tsx:97:                <RadarChart data={radarData}>
+src/pages/Profile.tsx:194:                      <RadarChart data={radarData}>
+src/pages/Onboarding.tsx:136:  radarData, generatedTags, isAnalyzing,
+src/pages/Onboarding.tsx:444:            <RadarChart data={radarData}>
+src/pages/Onboarding.tsx:524:  const [radarData, setRadarData] = useState<any[]>([]);
+src/pages/Onboarding.tsx:728:      setRadarData(analysisResult.radarData);
+src/pages/Onboarding.tsx:770:    toggleSkill, toggleInterest, addExperience, addProject, radarData, techRadarData, generatedTags, isAnalyzing,
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  ls[?2004l
+README.md		package-lock.json	tsconfig.json
+bun.lockb		package.json		tsconfig.node.json
+components.json		postcss.config.js	typescript
+dist			public			vite.config.ts
+eslint.config.js	src			vitest.config.ts
+index.html		tailwind.config.ts
+node_modules		tsconfig.app.json
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -rn "mockData" src[?2004l
+src/components/TopBar.tsx:4:import { userProfile } from "@/lib/mockData";
+src/components/AppLayout.tsx:9:import { userProfile } from "@/lib/mockData";
+src/pages/Settings.tsx:14:import { userProfile } from "@/lib/mockData";
+src/pages/Projects.tsx:17:import { myProjectSpaces, aiChatMessages, aiMockResponses, type TaskItem, type ProjectSpace } from "@/lib/mockData";
+src/pages/CareerInsights.tsx:7:import { careerRecommendation, skillGapData, growthTimeline } from "@/lib/mockData";
+src/pages/Dashboard.tsx:9:import { skillData, skillTags, careerRecommendation, deadlines, activeProjects, userProfile } from "@/lib/mockData";
+src/pages/Notifications.tsx:8:import { notifications } from "@/lib/mockData";
+src/pages/Profile.tsx:10:import { skillData, skillTags, userProfile as mockUserProfile, portfolioProjects as mockProjects, experienceTimeline as mockTimeline } from "@/lib/mockData";
+src/pages/JoinClassroom.tsx:7:import { teacherActivities } from "@/lib/mockData";
+src/pages/TeacherDashboard.tsx:13:import { teacherActivities } from "@/lib/mockData";
+src/pages/TeamMatching.tsx:11:import { teammates } from "@/lib/mockData";
+src/pages/teacher/ClassroomDetail.tsx:13:import { teacherActivities, teacherStudents, myProjectSpaces } from "@/lib/mockData";
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  ls src/lib[?2004l
+aiAnalyze.ts	firebase.ts	mockData.ts	pdfExtractor.ts	utils.ts
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/lib/mockData.ts | wc -l[?2004l
+     246
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat > src/lib/db.ts << 'EOF'[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hiimport { useState, useEffect } from "react";[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hiimport { collection, doc, getDoc, getDocs, query, where, DocumentData } [K  from "firebase/firestore";[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hiimport { db } from "./firebase";[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hiimport { useAuth } from "@/hooks/useAuth";[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h/// Generic hook to fetch a document[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004heexport function useFirestoreDoc<T>(collectionName: string, docId?: stri [Knng, defaultState: T | null = null) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   const [data, setData] = useState<T | null>(defaultState);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   const [loading, setLoading] = useState(true);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   useEffect(() => {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       setLoading(false);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       return;[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     const fetchDoc = async () => {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       try {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h         const docRef = doc(db, collectionName, docId);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h         const docSnap = await getDoc(docRef);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h         if (docSnap.exists()) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h           setData({ id: docSnap.id, ...docSnap.data() } as unknown as T [K));[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h         }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       } catch (err) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h         console.error(`Error fetching ${collectionName}/${docId}:`, err [K));[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       } finally {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h         setLoading(false);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchDoc();[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  import { useState, useEffect;[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hiimport { collection, doc, getDoc, getDocs, hoimport { db } from "./fire [Kbbase";[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hiimport { useAuth } from "@/hooks/useAuth";[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h/// Generic hook to fonimport { useAuth } from "@/hookat[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h/// Generic hook to fetch a document[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004heexpouseexport function useFirestoreDoc<T>[l  const [data, setData] = us [KeeState<T | null>(defaultState);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   const [loading, setLoading] = useState(true) t  const [loading, setLo [Kaading] = useState(true);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   useEffe),[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   useEffect(() => {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       ssho    if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hqq)      setLoadingit      return;[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h    s.    }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     co{     do      try {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h         const docRef  a        co          const docSnap = await getDoc [K((docRef);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h                  if (docSnap.exists()) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h           se.e          setData({ id: docSnaio        }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       } catch (err) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h         console.error(`Error fetching ${ }      } tc        console.err [Koo[c      } finally {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h         setLoading(false);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchDocdi        setLoadiul      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchDen    };ra    fsi import { useSnsimport { collection, doc, ge [Kttteimport { useAuth } from "@/hooks/useAuth";[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h/// Generic hook to fonimport { ult[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h/// Generic hook to fonimport { useAuth }"We// Generic hook to fetch a d [Koocument[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004heexpouseexport funcioexpouseexport function useFirestor,   const [loadin [Kgg, setLoading] = useState(true) t  const [loading, setLoading] = useState(true); [K[K[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   us][?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   useEffe),[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   useEffect(() => {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       ssho    if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hqq)      setLoadon?  useEffecst    if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hPPr      ssho    if; q)      setLoadingit      ri    }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h    s.    }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     co{     do ?:   sin    co{  rt        const docRef  a {             [K       if (docSnap.exists()) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h           se.e          setData({ id:  s          se.e          setData [K(({ id: dm[      } catch (err) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h         console.error(`Error fet H        console.erroat        setLoad [Kiing(false);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchDocdi        setLoadiul      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  ()      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchD.u    };co    f d    };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchDen    };ra    fsi imp"u    f, [?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h/// Generic hook to fonimport { ult[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h/// Generic hook to fonimport { useAuth }"We// Generic hook to fetch a d [Koocument[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004huult// Generic hook to fonimport { us fexpouseexport funcioexpouseexport [K  function useFirestor,   const [loading, setct[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   us][?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   useEffe),[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   useEffect(() => {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       ssho    if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hqq)      setLoadon?  useEffecst    if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hPPr      ssho    cat[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   u()   useEffecse    if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hnn<      ssho    ifonq)      setLoadon?  useEfftiPr      ssho    if; q)  [K      setLoadingit      le   s.    }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     co{     do ?:   sin    co{  rt       rt    co{   u          se.e    [K        setData({ id:  s          se.e          setData({ id: dm[      } catch (e [Krrrin        console.error(`Error fet H        console.erroat        setLoading(f [Kaalse);[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     {      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchDocdi        setLoadiul      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  ()      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  us    };ol    fje    };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  ()      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchD.u an ()  or    };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   je    f [    fetchDen    };ra    fsi imp"er// Generic hook to fonimpo [Krrt { ult[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h/// Gll// Generic hook to fonimport { us [ult// Generic hook to fonimpor [Ktt { us fexpouseexport funcioexpouseexport funct("  us][?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   useEffe),[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   useEffect(() => {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       ssho    if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hqq)      setLoadon?  useEffecst );[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   uxpo  useEffecn     if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h))       ssho    ifstq)      setLoadon?  useEffTiPr      ssho    cat[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   u()   useEffecse    if (ec  u()   useEffecsetun<      ssho    ifonq)  [K      setLoaom    co{     do ?:   sin    co{  rt       rt    co{   u          se. [Kee          setData({ id:  s          san      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     {      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchDocdi        setLoadiul      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  ()      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  us    };ol    fje    };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  ()      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchD.u an ()  or    };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   je    f [    fetchDen    };ra    fsi imp"er// Generic hook to [7m<ffffff[27m[7mf[7mf>[27m[K[7m<[7mf[7mf[7mf[7mf[7mf[7mf[7mf[7mf[7m>[27m    };[7m<ffffffff>[27m   {[7m<ffffffff>[27m[7m<ffffffff>[27m    };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     [7m<ffffffff>[27m[7m<ffffffff>[27m   f[7m<ffffffff>[27m   };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  ()      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  us    };ol  [7m<ffffffff>[27m[7m<ffffffff>[27m ()  ];    };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h  uon us  Mo ()      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     for    };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h    s    f>   je    f [    fetchDen    [7m<ffffffff>[27m[7m<ffffffff>[27m/ Gll// Gener [Kiic hook to fonimport { us [ult// Generic hook to fonimport { us [7m<ffffffff>[27m[7m<fffff[27m[7mf[7mff>[27m[K[1C useEffe),[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   useEffect(() => {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h       ssho    if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004hqq)      setLoadon?  useEffecst );[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h   uxpo  use[7m<ffffffff>[27m[7m<ffffffff>[27m[7m<ffffffff>[27m useEffec[7m<ffffffff>[27m[7m<ffffffff>[27m  [K   if (!docId) {[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h[7m<ffffffff>[27m[7m<ffffffff>[27m      ssho    if[7m<ffffffff>[27m[7m<ffffffff>[27mq)      setLoad [Koon?  useEff[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h    uxpo  useEffecn     if (!docId[7m<ffffffff>[27m[7m<ffffffff>[27m       ssho    ifs [Kttq)      setLoa[7m<ffffffff>[27m   u()   useEffecse    if (ec  u()   useEffecsetun<     [K   ssho    if[7m<ffffffff>[27m   };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     {      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     };[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h     fetchDocdi        setLoadiul      }[?2004l
+[0m[27m[24m[Jheredoc> [K[?2004h    [?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/lib/db.ts[?2004l
+import { useState, useEffect } from "react";
+import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
+import { db } from "./firebase";
+import { useAuth } from "@/hooks/useAuth";
+
+// Generic hook to fetch a document
+export function useFirestoreDoc<T>(collectionName: string, docId?: string, defaultState: T | null = null) {
+  const [data, setData] = useState<T | null>(defaultState);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!docId) {
+      setLoading(false);
+      return;
+    }
+    const fetchDoc = async () => {
+      try {
+        const docRef = doc(db, collectionName, docId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setData({ id: docSnap.id, ...docSnap.data() } as unknown as T);
+        }
+      } catch (err) {
+        console.error(`Error fetching ${collectionName}/${docId}:`, err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDoc();
+  }, [collectionName, docId]);
+
+  return { data, loading };
+}
+
+// Generic hook to fetch a collection
+export function useFirestoreCollection<T>(collectionName: string, queryConstraints: any[] = [], defaultState: T[] = []) {
+  const [data, setData] = useState<T[]>(defaultState);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCollection = async () => {
+      try {
+        const q = query(collection(db, collectionName), ...queryConstraints);
+        const querySnapshot = await getDocs(q);
+        const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as T);
+        if (items.length > 0) {
+          setData(items);
+        }
+      } catch (err) {
+        console.error(`Error fetching ${collectionName}:`, err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCollection();
+  }, [collectionName, JSON.stringify(queryConstraints)]);
+
+  return { data, loading };
+}
+
+// Default Fallback States
+const defaultUserProfile = {
+  name: "New Student", faculty: "Unknown Faculty", year: "1st Year", avatar: "NS", bio: "Welcome to KULifeOS!"
+};
+
+const defaultCareerRecommendation = {
+  title: "Exploring Careers", matchScore: 0, description: "Add more skills to get personalized recommendations.", requiredSkills: []
+};
+
+export interface TaskItem { id: string; title: string; description?: string; status: "todo" | "inProgress" | "done"; assignee: string; tags: string[]; createdAt: string; dueDate?: string; }
+export interface ProjectSpace { id: string; name: string; description: string; members: { name: string; avatar: string; role: string }[]; tasks: TaskItem[]; classroomId?: number; groupName?: string; }
+
+// Specific feature fetchers
+export function useCurrentUserProfile() {
+  const { authUser, userProfile } = useAuth();
+  const uid = authUser?.uid;
+  const { data, loading } = useFirestoreDoc<any>("users", uid, userProfile || defaultUserProfile);
+  return { profile: data || defaultUserProfile, loading };
+}
+
+export function useTeacherActivities() { return useFirestoreCollection<any>("teacherActivities", [], []); }
+export function useTeacherStudents() { return useFirestoreCollection<any>("teacherStudents", [], []); }
+export function useNotifications() { return useFirestoreCollection<any>("notifications", [], []); }
+export function useProjectSpaces() { return useFirestoreCollection<ProjectSpace>("projectSpaces", [], []); }
+export function useTeammates() { return useFirestoreCollection<any>("teammates", [], []); }
+export function useDeadlines() { return useFirestoreCollection<any>("deadlines", [], []); }
+export function useActiveProjects() { return useFirestoreCollection<any>("activeProjects", [], []); }
+export function usePortfolioProjects() { return useFirestoreCollection<any>("portfolioProjects", [], []); }
+export function useExperienceTimeline() { return useFirestoreCollection<any>("experienceTimeline", [], []); }
+export function useSkillData() { return useFirestoreCollection<any>("skillData", [], []); }
+export function useSkillGapData() { return useFirestoreCollection<any>("skillGapData", [], []); }
+export function useGrowthTimeline() { return useFirestoreCollection<any>("growthTimeline", [], []); }
+export function useCareerRecommendation() { return useFirestoreDoc<any>("careerRecommendations", "default", defaultCareerRecommendation); }
+
+export const skillTagsDefault = ["AI & ML", "Finance", "Marketing", "Data", "Leadership"];
+
+export const aiChatMessagesDefault = [
+  { role: "assistant", content: "สวัสดีครับ! ผมเป็น AI คู่คิดของคุณ ถามอะไรเกี่ยวกับโปรเจกต์ได้เลยนะครับ" },
+];
+export const aiMockResponsesDefault: Record<string, string> = {
+  default: "เข้าใจครับ! ลองอธิบายเพิ่มเติมได้ไหมครับว่าอยากให้ช่วยในส่วนไหน?",
+  task: "แนะนำให้แบ่งงานออกเป็น 3 ส่วนหลัก:\n1. **Research & Planning** — เก็บข้อมูล + ออกแบบ\n2. **Development** — สร้าง prototype + coding\n3. **Testing & Launch** — ทดสอบ + deploy\n\nแต่ละส่วนควรมีคนรับผิดชอบชัดเจนครับ",
+  topic: "สำหรับหัวข้อโปรเจกต์ ลองดูแนวทางนี้:\n- **AI + Education**: ระบบติวเตอร์อัจฉริยะ\n- **AI + Agriculture**: ตรวจจับโรคพืชด้วยภาพ\n- **AI + Health**: ระบบแนะนำการออกกำลังกาย\n\nเลือกหัวข้อที่ทีมถนัดและมี dataset ให้ใช้ครับ",
+  tech: "สำหรับ tech stack แนะนำ:\n- **Frontend**: React + TypeScript + Tailwind\n- **Backend**: Node.js + Express หรือ FastAPI\n- **Database**: PostgreSQL\n- **AI/ML**: Python + TensorFlow/PyTorch\n- **Deploy**: Docker + Cloud Run\n\nเลือกตามความถนัดของทีมได้เลยครับ",
+};
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -rn "mockData" src[?2004l
+src/components/TopBar.tsx:4:import { userProfile } from "@/lib/mockData";
+src/components/AppLayout.tsx:9:import { userProfile } from "@/lib/mockData";
+src/pages/Settings.tsx:14:import { userProfile } from "@/lib/mockData";
+src/pages/Projects.tsx:17:import { myProjectSpaces, aiChatMessages, aiMockResponses, type TaskItem, type ProjectSpace } from "@/lib/mockData";
+src/pages/CareerInsights.tsx:7:import { careerRecommendation, skillGapData, growthTimeline } from "@/lib/mockData";
+src/pages/Dashboard.tsx:9:import { skillData, skillTags, careerRecommendation, deadlines, activeProjects, userProfile } from "@/lib/mockData";
+src/pages/Notifications.tsx:8:import { notifications } from "@/lib/mockData";
+src/pages/Profile.tsx:10:import { skillData, skillTags, userProfile as mockUserProfile, portfolioProjects as mockProjects, experienceTimeline as mockTimeline } from "@/lib/mockData";
+src/pages/JoinClassroom.tsx:7:import { teacherActivities } from "@/lib/mockData";
+src/pages/TeacherDashboard.tsx:13:import { teacherActivities } from "@/lib/mockData";
+src/pages/TeamMatching.tsx:11:import { teammates } from "@/lib/mockData";
+src/pages/teacher/ClassroomDetail.tsx:13:import { teacherActivities, teacherStudents, myProjectSpaces } from "@/lib/mockData";
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  node -e "const fs = require('fs' [K)); const file = 'src/components/TopBar.tsx'; let c = fs.readFileSync(file, 'utf8 [K''); c = c.replace(/import \{ userProfile \} from \&quot;@\/lib\/mockData\&quot;; [K//g, 'import { useCurrentUserProfile } from &quot;@/lib/db&quot;;'); c = c.replac [Kee(/export function TopBar\(\) \{/g, 'export function TopBar() { const { profile: [K  userProfile } = useCurrentUserProfile(); '); fs.writeFileSync(file, c);"[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/components/TopBar.tsx[?2004l
+import { Bell } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { userProfile } from "@/lib/mockData";
+
+interface TopBarProps {
+  title: string;
+}
+
+export function TopBar({ title }: TopBarProps) {
+  return (
+    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4 md:px-8">
+      <div className="flex items-center gap-3">
+        <SidebarTrigger className="hidden" />
+        <h1 className="text-xl font-bold text-foreground">{title}</h1>
+      </div>
+      <div className="flex items-center gap-4">
+        <button className="relative rounded-lg p-2 text-muted-foreground transition-colors duration-200 hover:bg-accent hover:text-accent-foreground">
+          <Bell className="h-5 w-5" />
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
+        </button>
+        <Avatar className="h-9 w-9 cursor-pointer">
+          <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+            {userProfile.avatar}
+          </AvatarFallback>
+        </Avatar>
+      </div>
+    </header>
+  );
+}
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx ts-node --compilerOptions '{ [K""module":"commonjs"}' -e "[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hcconst fs = require('fs');[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(file, code) {[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h   let content = fs.readFileSync(file, 'utf8');[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h   content = content.replace(/import\s+\{([^}]+)\}\s+from\s+[\"']@\/lib\/ [KmmockData[\"'];/g, (match, p1) => {[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h     // create imports from db[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h     const vars = p1.split(',').map(s => s.trim());[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h     let replaceVars = '';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h     for (const v of vars) {[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       const parts = v.split(/\s+as\s+/);[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       const name = parts[0];[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       const asName = parts.length > 1 ? parts[1] : name;[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       [?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       // Basic mappings[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'userProfile') replaceVars += 'useCurrentUserProfile, [K  ';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'notifications') replaceVars += 'useNotifications, '; [K[K[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'skillData') replaceVars += 'useSkillData, ';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'skillTags') replaceVars += 'skillTagsDefault, ';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'careerRecommendation') replaceVars += 'useCareerReco [Kmmmendation, ';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'skillGapData') replaceVars += 'useSkillGapData, ';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (namconst fs = require('fs');[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(file, cod '[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(fadl  let content = fs.readFileSync(fis,  content  [K== content.replace(/import\s+\{([^}]ac    // create imports from db[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h     const vars = p1.split(',').map(s => s.trim());[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h     let replaceVars = ''ct    const vars = p1.split(',pe    let replaceV [Kaars = '';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h     for (const v of varel    for (const v of vars==      const parts = v [K..spli+=      const name = parts[0];[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       conste      const asName = parts.rs      [?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       // Basic mappings[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'userer     nt      if (name === 'useT      if (name  [K==== 'notifications') replaceVars += 'useNotifications, ';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h  se      if (name === 'skillData') replaceVars += 'useSkillData, ';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       ai      if (name === 'skillTags') replaceVars += 'skillTagsDefaule [Kpp      if (name === 'careerRecommendation') replaceVars += 'useCareesk      if ( [Knname === 'skillGapData') replaceVars += 'useSkillGapData, ';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (namcan      if (namconst fs = require('fs');[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(file, cre[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(file, cod '[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffurn function replaceUsage(fadl  let m     const vars = p1.split(',').ma [Kpp(s => s.trim());[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h     let replaceVars = ''ct    const vars = p1.split(',pe    let replaceV [Kaars = '';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h     po    let replaceVars = ''ct    const vars = p1.splio    for (const  [Kvv of varel    for (const v of vars==      const parts = v.spli+= \(      conste  [K      const asName = parts.rs      [?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       // Basic mappings[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'userer     nt ro      // Basic mappings[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'us)       if (name === 'us c se      if (name === 's [KkkillData') replaceVars += 'useSkillData, ';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       ai      if (name === 'skillTags') replaceVars += 'skil[]      ai   [K     if (name === 'skillTags') replaceVars += 'skillTagsDca      if (namcan       [Kiif (namconst fs = require('fs');[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(file, cre[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(file, cod '[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffurn function replaceUsage(fadl  let m     const vars = p1.split(',').ma [Kpp(s => s.trim());co[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(file, cre[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsag dafunction replaceUsage(file, cowtfurn function rep [KllaceUsage(fadl .(    let replaceVars = ''ct    const vars = p1.split(',pe    let [K  replaceVars = '';[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h     poda    po    let replaceVars = ''ct    const vars = p1.splio    for [K  (const v of var d      // Basic mappings[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'userer     nt ro      // Basic mappings[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'us)       if (name === 'us c se      if (name === 's [KkkillData') replaceVars += 'usen      if (name === 'usnt      if (name === 'us)   [K      if (name === 'us c se      i=       ai      if (name === 'skillTags') repla [KcceVars += 'skil[]      ai      if (name === 'skillTags') replaceVars se[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(file, cre[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(file, cod '[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffurn function replaceUsage(fadl  let m     const vars = p1.split(',').ma [Kpp(s => s.trim());co[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsage(fixpefunction replaceUsage(file, courfurn function [K  replaceUsage(fadl tefunction replaceUsage(file, cre[?2004l
+[0m[27m[24m[Jdquote> [K[?2004hffunction replaceUsag dafunction replaceUsage(file, cowtfurtsfunction rep [KllaceUsag dafunctioSe    poda    po    let replaceVars = ''ct    const vars = p1. [Kssplio    for (const v of var d      // Basic mappings[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'userer     nt ro      // Basic mappc/      if (name  [K==== 'userer     nt ro      // Basic mappings[?2004l
+[0m[27m[24m[Jdquote> [K[?2004h       if (name === 'us)       if (name === 'us c se er      if (name === [K  'us)       if (name === 'us c se      if)funct[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/lib/db.ts[?2004l
+import { useState, useEffect } from "react";
+import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
+import { db } from "./firebase";
+import { useAuth } from "@/hooks/useAuth";
+
+// Generic hook to fetch a document
+export function useFirestoreDoc<T>(collectionName: string, docId?: string, defaultState: T | null = null) {
+  const [data, setData] = useState<T | null>(defaultState);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!docId) {
+      setLoading(false);
+      return;
+    }
+    const fetchDoc = async () => {
+      try {
+        const docRef = doc(db, collectionName, docId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setData({ id: docSnap.id, ...docSnap.data() } as unknown as T);
+        }
+      } catch (err) {
+        console.error(`Error fetching ${collectionName}/${docId}:`, err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDoc();
+  }, [collectionName, docId]);
+
+  return { data, loading };
+}
+
+// Generic hook to fetch a collection
+export function useFirestoreCollection<T>(collectionName: string, queryConstraints: any[] = [], defaultState: T[] = []) {
+  const [data, setData] = useState<T[]>(defaultState);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCollection = async () => {
+      try {
+        const q = query(collection(db, collectionName), ...queryConstraints);
+        const querySnapshot = await getDocs(q);
+        const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as T);
+        if (items.length > 0) {
+          setData(items);
+        }
+      } catch (err) {
+        console.error(`Error fetching ${collectionName}:`, err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCollection();
+  }, [collectionName, JSON.stringify(queryConstraints)]);
+
+  return { data, loading };
+}
+
+// Default Fallback States
+const defaultUserProfile = {
+  name: "New Student", faculty: "Unknown Faculty", year: "1st Year", avatar: "NS", bio: "Welcome to KULifeOS!"
+};
+
+const defaultCareerRecommendation = {
+  title: "Exploring Careers", matchScore: 0, description: "Add more skills to get personalized recommendations.", requiredSkills: []
+};
+
+export interface TaskItem { id: string; title: string; description?: string; status: "todo" | "inProgress" | "done"; assignee: string; tags: string[]; createdAt: string; dueDate?: string; }
+export interface ProjectSpace { id: string; name: string; description: string; members: { name: string; avatar: string; role: string }[]; tasks: TaskItem[]; classroomId?: number; groupName?: string; }
+
+// Specific feature fetchers
+export function useCurrentUserProfile() {
+  const { authUser, userProfile } = useAuth();
+  const uid = authUser?.uid;
+  const { data, loading } = useFirestoreDoc<any>("users", uid, userProfile || defaultUserProfile);
+  return { profile: data || defaultUserProfile, loading };
+}
+
+export function useTeacherActivities() { return useFirestoreCollection<any>("teacherActivities", [], []); }
+export function useTeacherStudents() { return useFirestoreCollection<any>("teacherStudents", [], []); }
+export function useNotifications() { return useFirestoreCollection<any>("notifications", [], []); }
+export function useProjectSpaces() { return useFirestoreCollection<ProjectSpace>("projectSpaces", [], []); }
+export function useTeammates() { return useFirestoreCollection<any>("teammates", [], []); }
+export function useDeadlines() { return useFirestoreCollection<any>("deadlines", [], []); }
+export function useActiveProjects() { return useFirestoreCollection<any>("activeProjects", [], []); }
+export function usePortfolioProjects() { return useFirestoreCollection<any>("portfolioProjects", [], []); }
+export function useExperienceTimeline() { return useFirestoreCollection<any>("experienceTimeline", [], []); }
+export function useSkillData() { return useFirestoreCollection<any>("skillData", [], []); }
+export function useSkillGapData() { return useFirestoreCollection<any>("skillGapData", [], []); }
+export function useGrowthTimeline() { return useFirestoreCollection<any>("growthTimeline", [], []); }
+export function useCareerRecommendation() { return useFirestoreDoc<any>("careerRecommendations", "default", defaultCareerRecommendation); }
+
+export const skillTagsDefault = ["AI & ML", "Finance", "Marketing", "Data", "Leadership"];
+
+export const aiChatMessagesDefault = [
+  { role: "assistant", content: "สวัสดีครับ! ผมเป็น AI คู่คิดของคุณ ถามอะไรเกี่ยวกับโปรเจกต์ได้เลยนะครับ" },
+];
+export const aiMockResponsesDefault: Record<string, string> = {
+  default: "เข้าใจครับ! ลองอธิบายเพิ่มเติมได้ไหมครับว่าอยากให้ช่วยในส่วนไหน?",
+  task: "แนะนำให้แบ่งงานออกเป็น 3 ส่วนหลัก:\n1. **Research & Planning** — เก็บข้อมูล + ออกแบบ\n2. **Development** — สร้าง prototype + coding\n3. **Testing & Launch** — ทดสอบ + deploy\n\nแต่ละส่วนควรมีคนรับผิดชอบชัดเจนครับ",
+  topic: "สำหรับหัวข้อโปรเจกต์ ลองดูแนวทางนี้:\n- **AI + Education**: ระบบติวเตอร์อัจฉริยะ\n- **AI + Agriculture**: ตรวจจับโรคพืชด้วยภาพ\n- **AI + Health**: ระบบแนะนำการออกกำลังกาย\n\nเลือกหัวข้อที่ทีมถนัดและมี dataset ให้ใช้ครับ",
+  tech: "สำหรับ tech stack แนะนำ:\n- **Frontend**: React + TypeScript + Tailwind\n- **Backend**: Node.js + Express หรือ FastAPI\n- **Database**: PostgreSQL\n- **AI/ML**: Python + TensorFlow/PyTorch\n- **Deploy**: Docker + Cloud Run\n\nเลือกตามความถนัดของทีมได้เลยครับ",
+};
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  head -n 25 src/components/AppLay [Koout.tsx src/pages/Settings.tsx src/pages/Projects.tsx src/pages/CareerInsights.t [Kssx src/pages/Dashboard.tsx src/pages/Notifications.tsx src/pages/Profile.tsx src [K//pages/JoinClassroom.tsx src/pages/TeacherDashboard.tsx src/pages/TeamMatching.t [Kssx src/pages/teacher/ClassroomDetail.tsx[?2004l
+==> src/components/AppLayout.tsx <==
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { BottomNav } from "@/components/BottomNav";
+import { TopBar } from "@/components/TopBar";
+import { motion } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Bell } from "lucide-react";
+import { userProfile } from "@/lib/mockData";
+
+interface AppLayoutProps {
+  children: React.ReactNode;
+  title: string;
+  hideHeader?: boolean;
+}
+
+export function AppLayout({ children, title, hideHeader = false }: AppLayoutProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full overflow-x-hidden">
+        <AppSidebar />
+        <div className="flex flex-1 flex-col min-w-0">
+
+==> src/pages/Settings.tsx <==
+import { useState } from "react";
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Camera, Save, Bell, Globe, Shield, ChevronRight, Moon, Sun, LogOut, Monitor } from "lucide-react";
+import { userProfile } from "@/lib/mockData";
+import { motion } from "framer-motion";
+import { useTheme } from "@/hooks/use-theme";
+import { useToast } from "@/hooks/use-toast";
+import { useLogout } from "@/hooks/use-logout";
+import { LogoutDialog } from "@/components/LogoutDialog";
+
+const Settings = () => {
+  const { toast } = useToast();
+  const [name, setName] = useState(userProfile.name);
+  const [faculty, setFaculty] = useState(userProfile.faculty);
+  const [bio, setBio] = useState(userProfile.bio);
+
+==> src/pages/Projects.tsx <==
+import { useState, useRef, useEffect } from "react";
+import { AppLayout } from "@/components/AppLayout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import {
+  Sparkles, Plus, Send, Bot, User, GripVertical,
+  CheckCircle2, Circle, Clock, Trash2, ChevronRight, MessageCircle, Users, ChevronDown
+} from "lucide-react";
+import { myProjectSpaces, aiChatMessages, aiMockResponses, type TaskItem, type ProjectSpace } from "@/lib/mockData";
+import { motion, AnimatePresence } from "framer-motion";
+
+const statusConfig = {
+  todo: { label: "To Do", icon: Circle, color: "text-muted-foreground", bg: "bg-muted/50" },
+  inProgress: { label: "กำลังทำ", icon: Clock, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-500/10" },
+  done: { label: "เสร็จแล้ว", icon: CheckCircle2, color: "text-primary", bg: "bg-primary/5" },
+};
+
+
+==> src/pages/CareerInsights.tsx <==
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { TrendingUp, Target, Zap, ChevronRight } from "lucide-react";
+import { careerRecommendation, skillGapData, growthTimeline } from "@/lib/mockData";
+import { motion } from "framer-motion";
+
+const CareerInsights = () => {
+  return (
+    <AppLayout title="Career">
+      <PageTransition>
+        {/* ========== MOBILE ========== */}
+        <div className="md:hidden space-y-5">
+          {/* Career Match Hero */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-secondary p-6 text-primary-foreground"
+          >
+            <div className="absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/8" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 opacity-80" />
+
+==> src/pages/Dashboard.tsx <==
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
+import { ArrowRight, Calendar, FolderKanban, Flame, Trophy, Sparkles, TrendingUp, Hand } from "lucide-react";
+import { skillData, skillTags, careerRecommendation, deadlines, activeProjects, userProfile } from "@/lib/mockData";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const totalProgress = Math.round(activeProjects.reduce((a, p) => a + p.progress, 0) / activeProjects.length);
+
+  return (
+    <AppLayout title="Dashboard" hideHeader>
+      <PageTransition>
+        {/* ========== MOBILE LAYOUT ========== */}
+        <div className="md:hidden space-y-5 overflow-x-hidden">
+          {/* Hero Greeting */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+
+==> src/pages/Notifications.tsx <==
+import { useState } from "react";
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Bell, Calendar, Users, FolderKanban, TrendingUp, CheckCircle, Circle, BellRing } from "lucide-react";
+import { notifications } from "@/lib/mockData";
+import { motion, AnimatePresence } from "framer-motion";
+
+const typeIcons: Record<string, typeof Bell> = {
+  deadline: Calendar, invite: Users, group: Users, task: FolderKanban, career: TrendingUp,
+};
+
+const typeColors: Record<string, string> = {
+  deadline: "bg-red-100 text-red-600",
+  invite: "bg-blue-100 text-blue-600",
+  group: "bg-primary/10 text-primary",
+  task: "bg-orange-100 text-orange-600",
+  career: "bg-purple-100 text-purple-600",
+};
+
+const Notifications = () => {
+  const [items, setItems] = useState(notifications);
+  const unreadCount = items.filter((n) => !n.read).length;
+
+==> src/pages/Profile.tsx <==
+import { useNavigate } from "react-router-dom";
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
+import { Pencil, Briefcase, Award, ChevronRight } from "lucide-react";
+import { skillData, skillTags, userProfile as mockUserProfile, portfolioProjects as mockProjects, experienceTimeline as mockTimeline } from "@/lib/mockData";
+import { motion } from "framer-motion";
+
+// Load persisted onboarding data or fall back to mock
+const storedRaw = localStorage.getItem("ku_profile");
+const stored = storedRaw ? JSON.parse(storedRaw) : null;
+
+const userProfile = stored ? {
+  name: stored.name || mockUserProfile.name,
+  faculty: [stored.faculty, stored.major].filter(Boolean).join(" — ") || mockUserProfile.faculty,
+  year: stored.year || mockUserProfile.year,
+  avatar: stored.avatar || mockUserProfile.avatar,
+  bio: stored.bio || mockUserProfile.bio,
+} : mockUserProfile;
+
+const allSkillTags: string[] = stored?.skills?.length
+
+==> src/pages/JoinClassroom.tsx <==
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { CheckCircle, GraduationCap, Users, Hash, ArrowRight, PartyPopper } from "lucide-react";
+import { useState } from "react";
+import { teacherActivities } from "@/lib/mockData";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+
+const JoinClassroom = () => {
+  const { classroomId } = useParams();
+  const navigate = useNavigate();
+  const [joined, setJoined] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [mode, setMode] = useState<"info" | "code">(classroomId ? "info" : "code");
+
+  const classroom = classroomId
+    ? teacherActivities.find((a) => a.id === Number(classroomId))
+    : null;
+
+  const handleCodeJoin = () => {
+    // parse code like KU-0001
+    const match = codeInput.trim().match(/^KU-?(\d+)$/i);
+    if (!match) {
+
+==> src/pages/TeacherDashboard.tsx <==
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { TeacherLayout } from "@/components/teacher/TeacherLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Users, CheckCircle, Clock, QrCode, MoreVertical, Sparkles, ChevronRight } from "lucide-react";
+import { teacherActivities } from "@/lib/mockData";
+import { ClassroomQRDialog } from "@/components/teacher/ClassroomQRDialog";
+import { motion } from "framer-motion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const bannerColors = [
+  "from-[hsl(153,100%,20%)] to-[hsl(153,80%,30%)]",
+  "from-[hsl(200,80%,40%)] to-[hsl(200,60%,50%)]",
+
+==> src/pages/TeamMatching.tsx <==
+import { useState } from "react";
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Search, UserPlus, Check } from "lucide-react";
+import { teammates } from "@/lib/mockData";
+import { motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
+
+const filterChips = ["All", "AI", "Finance", "Marketing", "Design", "Data"];
+
+const TeamMatching = () => {
+  const { toast } = useToast();
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [search, setSearch] = useState("");
+  const [invited, setInvited] = useState<number[]>([]);
+
+  const handleInvite = (student: typeof teammates[0]) => {
+    if (invited.includes(student.id)) return;
+    setInvited((prev) => [...prev, student.id]);
+
+==> src/pages/teacher/ClassroomDetail.tsx <==
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { TeacherLayout } from "@/components/teacher/TeacherLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Users, Brain, QrCode, ArrowLeft, CheckCircle, Clock, Trash2, UserPlus, FolderKanban, Circle, CheckCircle2 } from "lucide-react";
+import { teacherActivities, teacherStudents, myProjectSpaces } from "@/lib/mockData";
+import { ClassroomQRDialog } from "@/components/teacher/ClassroomQRDialog";
+import { motion } from "framer-motion";
+
+const bannerColors = [
+  "from-[hsl(153,100%,20%)] to-[hsl(153,80%,30%)]",
+  "from-[hsl(200,80%,40%)] to-[hsl(200,60%,50%)]",
+  "from-[hsl(280,60%,45%)] to-[hsl(280,40%,55%)]",
+  "from-[hsl(30,80%,50%)] to-[hsl(30,60%,55%)]",
+];
+
+const ClassroomDetail = () => {
+  const { classroomId } = useParams();
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -n 'const Dashboard =' src/ [Kppages/Dashboard.tsx[?2004l
+13:const Dashboard = () => {
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '5,20p' src/pages/Dashboa [Krrd.tsx[?2004l
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
+import { ArrowRight, Calendar, FolderKanban, Flame, Trophy, Sparkles, TrendingUp, Hand } from "lucide-react";
+import { skillData, skillTags, careerRecommendation, deadlines, activeProjects, userProfile } from "@/lib/mockData";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const totalProgress = Math.round(activeProjects.reduce((a, p) => a + p.progress, 0) / activeProjects.length);
+
+  return (
+    <AppLayout title="Dashboard" hideHeader>
+      <PageTransition>
+        {/* ========== MOBILE LAYOUT ========== */}
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '5,20p' src/components/Ap [KppLayout.tsx[?2004l
+import { motion } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Bell } from "lucide-react";
+import { userProfile } from "@/lib/mockData";
+
+interface AppLayoutProps {
+  children: React.ReactNode;
+  title: string;
+  hideHeader?: boolean;
+}
+
+export function AppLayout({ children, title, hideHeader = false }: AppLayoutProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '10,25p' src/pages/Settin [Kggs.tsx[?2004l
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Camera, Save, Bell, Globe, Shield, ChevronRight, Moon, Sun, LogOut, Monitor } from "lucide-react";
+import { userProfile } from "@/lib/mockData";
+import { motion } from "framer-motion";
+import { useTheme } from "@/hooks/use-theme";
+import { useToast } from "@/hooks/use-toast";
+import { useLogout } from "@/hooks/use-logout";
+import { LogoutDialog } from "@/components/LogoutDialog";
+
+const Settings = () => {
+  const { toast } = useToast();
+  const [name, setName] = useState(userProfile.name);
+  const [faculty, setFaculty] = useState(userProfile.faculty);
+  const [bio, setBio] = useState(userProfile.bio);
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  head -n 30 src/pages/Projects.ts [Kx[?2004l
+import { useState, useRef, useEffect } from "react";
+import { AppLayout } from "@/components/AppLayout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import {
+  Sparkles, Plus, Send, Bot, User, GripVertical,
+  CheckCircle2, Circle, Clock, Trash2, ChevronRight, MessageCircle, Users, ChevronDown
+} from "lucide-react";
+import { myProjectSpaces, aiChatMessages, aiMockResponses, type TaskItem, type ProjectSpace } from "@/lib/mockData";
+import { motion, AnimatePresence } from "framer-motion";
+
+const statusConfig = {
+  todo: { label: "To Do", icon: Circle, color: "text-muted-foreground", bg: "bg-muted/50" },
+  inProgress: { label: "กำลังทำ", icon: Clock, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-500/10" },
+  done: { label: "เสร็จแล้ว", icon: CheckCircle2, color: "text-primary", bg: "bg-primary/5" },
+};
+
+/* ─── Mobile Kanban Column (Collapsible) ─── */
+const MobileKanbanColumn = ({
+  status,
+  tasks,
+  onMove,
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '15,20p' src/pages/Projec [Ktts.tsx[?2004l
+  CheckCircle2, Circle, Clock, Trash2, ChevronRight, MessageCircle, Users, ChevronDown
+} from "lucide-react";
+import { myProjectSpaces, aiChatMessages, aiMockResponses, type TaskItem, type ProjectSpace } from "@/lib/mockData";
+import { motion, AnimatePresence } from "framer-motion";
+
+const statusConfig = {
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -n 'const Projects = () =>  [K{{' src/pages/Projects.tsx[?2004l
+120:const Projects = () => {
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '135,150p' src/pages/Proj [Keects.tsx[?2004l
+      setSpaces(myProjectSpaces);
+      setActiveSpaceId(myProjectSpaces[0].id);
+    }
+  }, [myProjectSpaces, spaces.length]);
+
+  const activeSpace = spaces.find((s) => s.id === activeSpaceId) || spaces[0];
+
+  const tasksByStatus = {
+    todo: activeSpace?.tasks.filter((t) => t.status === "todo") || [],
+    inProgress: activeSpace.tasks.filter((t) => t.status === "inProgress"),
+    done: activeSpace.tasks.filter((t) => t.status === "done"),
+  };
+
+  const totalTasks = activeSpace.tasks.length;
+  const doneTasks = tasksByStatus.done.length;
+  const progressPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '6,20p' src/pages/CareerI [Knnsights.tsx[?2004l
+import { TrendingUp, Target, Zap, ChevronRight } from "lucide-react";
+import { careerRecommendation, skillGapData, growthTimeline } from "@/lib/mockData";
+import { motion } from "framer-motion";
+
+const CareerInsights = () => {
+  return (
+    <AppLayout title="Career">
+      <PageTransition>
+        {/* ========== MOBILE ========== */}
+        <div className="md:hidden space-y-5">
+          {/* Career Match Hero */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-secondary p-6 text-primary-foreground"
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '5,20p' src/pages/Notific [Kaations.tsx[?2004l
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Bell, Calendar, Users, FolderKanban, TrendingUp, CheckCircle, Circle, BellRing } from "lucide-react";
+import { notifications } from "@/lib/mockData";
+import { motion, AnimatePresence } from "framer-motion";
+
+const typeIcons: Record<string, typeof Bell> = {
+  deadline: Calendar, invite: Users, group: Users, task: FolderKanban, career: TrendingUp,
+};
+
+const typeColors: Record<string, string> = {
+  deadline: "bg-red-100 text-red-600",
+  invite: "bg-blue-100 text-blue-600",
+  group: "bg-primary/10 text-primary",
+  task: "bg-orange-100 text-orange-600",
+  career: "bg-purple-100 text-purple-600",
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -n 'const Notifications = ( [K)) => {' src/pages/Notifications.tsx[?2004l
+23:const Notifications = () => {
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '23,40p' src/pages/Notifi [Kccations.tsx[?2004l
+const Notifications = () => {
+  const [items, setItems] = useState(notifications);
+  const unreadCount = items.filter((n) => !n.read).length;
+
+  const markAllRead = () => setItems(items.map((n) => ({ ...n, read: true })));
+  const toggleRead = (id: number) => setItems(items.map((n) => n.id === id ? { ...n, read: !n.read } : n));
+
+  return (
+    <AppLayout title="Alerts">
+      <PageTransition>
+        {/* ========== MOBILE ========== */}
+        <div className="md:hidden space-y-4">
+          {/* Unread count + Mark all */}
+          <div className="flex items-center justify-between">
+            <p className="text-[13px] text-muted-foreground">
+              {unreadCount > 0 ? `${unreadCount} ยังไม่ได้อ่าน` : "อ่านครบแล้ว ✓"}
+            </p>
+            {unreadCount > 0 && (
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '5,10p' src/pages/Notific [Kaations.tsx[?2004l
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Bell, Calendar, Users, FolderKanban, TrendingUp, CheckCircle, Circle, BellRing } from "lucide-react";
+import { notifications } from "@/lib/mockData";
+import { motion, AnimatePresence } from "framer-motion";
+
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+ grep -n 'const Profile = () => {' src/pages/Profile.tsx
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -n 'const Profile = () => { [K'' src/pages/Profile.tsx[?2004l
+56:const Profile = () => {
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '5,20p' src/pages/JoinCla [Ksssroom.tsx[?2004l
+import { CheckCircle, GraduationCap, Users, Hash, ArrowRight, PartyPopper } from "lucide-react";
+import { useState } from "react";
+import { teacherActivities } from "@/lib/mockData";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+
+const JoinClassroom = () => {
+  const { classroomId } = useParams();
+  const navigate = useNavigate();
+  const [joined, setJoined] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [mode, setMode] = useState<"info" | "code">(classroomId ? "info" : "code");
+
+  const classroom = classroomId
+    ? teacherActivities.find((a) => a.id === Number(classroomId))
+    : null;
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '10,25p' src/pages/Teache [KrrDashboard.tsx[?2004l
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Users, CheckCircle, Clock, QrCode, MoreVertical, Sparkles, ChevronRight } from "lucide-react";
+import { teacherActivities } from "@/lib/mockData";
+import { ClassroomQRDialog } from "@/components/teacher/ClassroomQRDialog";
+import { motion } from "framer-motion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const bannerColors = [
+  "from-[hsl(153,100%,20%)] to-[hsl(153,80%,30%)]",
+  "from-[hsl(200,80%,40%)] to-[hsl(200,60%,50%)]",
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -n 'const TeacherDashboard  [K== () => {' src/pages/TeacherDashboard.tsx[?2004l
+30:const TeacherDashboard = () => {
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '30,45p' src/pages/Teache [KrrDashboard.tsx[?2004l
+const TeacherDashboard = () => {
+  const [qrActivity, setQrActivity] = useState<{ id: number; name: string } | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  return (
+    <TeacherLayout>
+      <PageTransition>
+        <div className="space-y-5">
+          {/* ===== MOBILE LAYOUT ===== */}
+          <div className="md:hidden">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-[22px] font-bold text-foreground">Classrooms</h1>
+                <p className="text-[12px] text-muted-foreground">จัดการห้องเรียนและ AI จัดกลุ่ม</p>
+              </div>
+              <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '12,33p' src/pages/Teache [KrrDashboard.tsx[?2004l
+import { Plus, Users, CheckCircle, Clock, QrCode, MoreVertical, Sparkles, ChevronRight } from "lucide-react";
+import { teacherActivities } from "@/lib/mockData";
+import { ClassroomQRDialog } from "@/components/teacher/ClassroomQRDialog";
+import { motion } from "framer-motion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const bannerColors = [
+  "from-[hsl(153,100%,20%)] to-[hsl(153,80%,30%)]",
+  "from-[hsl(200,80%,40%)] to-[hsl(200,60%,50%)]",
+  "from-[hsl(280,60%,45%)] to-[hsl(280,40%,55%)]",
+  "from-[hsl(30,80%,50%)] to-[hsl(30,60%,55%)]",
+];
+
+const TeacherDashboard = () => {
+  const [qrActivity, setQrActivity] = useState<{ id: number; name: string } | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -n '10,25p' src/pages/teache [Krr/ClassroomDetail.tsx[?2004l
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Users, Brain, QrCode, ArrowLeft, CheckCircle, Clock, Trash2, UserPlus, FolderKanban, Circle, CheckCircle2 } from "lucide-react";
+import { teacherActivities, teacherStudents, myProjectSpaces } from "@/lib/mockData";
+import { ClassroomQRDialog } from "@/components/teacher/ClassroomQRDialog";
+import { motion } from "framer-motion";
+
+const bannerColors = [
+  "from-[hsl(153,100%,20%)] to-[hsl(153,80%,30%)]",
+  "from-[hsl(200,80%,40%)] to-[hsl(200,60%,50%)]",
+  "from-[hsl(280,60%,45%)] to-[hsl(280,40%,55%)]",
+  "from-[hsl(30,80%,50%)] to-[hsl(30,60%,55%)]",
+];
+
+const ClassroomDetail = () => {
+  const { classroomId } = useParams();
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -rn "mockData" src[?2004l
+src/pages/TeamMatching.tsx:11:import { teammates } from "@/lib/mockData";
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/pages/TeamMatching.tsx | [K  head -n 30[?2004l
+import { useState } from "react";
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Search, UserPlus, Check } from "lucide-react";
+import { teammates } from "@/lib/mockData";
+import { motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
+
+const filterChips = ["All", "AI", "Finance", "Marketing", "Design", "Data"];
+
+const TeamMatching = () => {
+  const { toast } = useToast();
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [search, setSearch] = useState("");
+  const [invited, setInvited] = useState<number[]>([]);
+
+  const handleInvite = (student: typeof teammates[0]) => {
+    if (invited.includes(student.id)) return;
+    setInvited((prev) => [...prev, student.id]);
+    toast({ title: `ส่งคำเชิญหา ${student.name} แล้ว ✓`, description: "รอการตอบรับจากสมาชิก" });
+  };
+
+  const filtered = teammates.filter((t) => {
+    const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase()) || t.skills.some(s => s.toLowerCase().includes(search.toLowerCase()));
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -rn "mockData" src[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  touch src/lib/db.ts[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/lib/firebase.ts[?2004l
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getFirestore } from "firebase/firestore";
+import { getDatabase } from "firebase/database";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+// Initialize Cloud Firestore and get a reference to the service
+const db = getFirestore(app);
+
+// Initialize Realtime Database and get a reference to the service
+const rtdb = getDatabase(app);
+
+// Initialize Auth
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+
+export { app, analytics, db, rtdb, auth, googleProvider };
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/pages/Dashboard.tsx | he [Kaad -n 50[?2004l
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
+import { ArrowRight, Calendar, FolderKanban, Flame, Trophy, Sparkles, TrendingUp, Hand } from "lucide-react";
+import { useSkillData, skillTagsDefault as skillTags, useCareerRecommendation, useDeadlines, useActiveProjects, useCurrentUserProfile } from "@/lib/db";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+
+const Dashboard = () => {
+  const { data: skillData = [] } = useSkillData();
+  const { data: careerRecommendation } = useCareerRecommendation();
+  const { data: deadlines = [] } = useDeadlines();
+  const { data: activeProjects = [] } = useActiveProjects();
+  const { profile: userProfile } = useCurrentUserProfile();
+
+  const navigate = useNavigate();
+  const validProjects = activeProjects && activeProjects.length > 0 ? activeProjects : [];
+  const totalProgress = validProjects.length > 0 ? Math.round(validProjects.reduce((a, p) => a + (p.progress || 0), 0) / validProjects.length) : 0;
+
+  return (
+    <AppLayout title="Dashboard" hideHeader>
+      <PageTransition>
+        {/* ========== MOBILE LAYOUT ========== */}
+        <div className="md:hidden space-y-5 overflow-x-hidden">
+          {/* Hero Greeting */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-secondary px-5 py-5 text-primary-foreground"
+          >
+            <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/8" />
+            <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-white/5" />
+            <div className="relative z-10">
+              <p className="text-sm font-medium opacity-80">สวัสดี <Hand className="h-4 w-4 inline" /></p>
+              <h2 className="mt-0.5 text-[26px] font-extrabold leading-tight">{userProfile.name.split(" ")[0]}</h2>
+              <p className="mt-1.5 text-sm opacity-70">ทักษะของคุณกำลังเติบโต <Sparkles className="h-4 w-4 inline ml-1 text-yellow-500" /></p>
+
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                {[
+                  { icon: Flame, value: "7", label: "Streak" },
+                  { icon: Trophy, value: `${careerRecommendation.matchScore}%`, label: "Match" },
+                  { icon: TrendingUp, value: `${totalProgress}%`, label: "Progress" },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-2xl bg-white/12 px-2 py-2.5 text-center backdrop-blur-sm">
+                    <stat.icon className="mx-auto h-4.5 w-4.5 opacity-90" />
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/pages/Dashboard.tsx | he [Kaad -n 30[?2004l
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
+import { ArrowRight, Calendar, FolderKanban, Flame, Trophy, Sparkles, TrendingUp, Hand } from "lucide-react";
+import { useSkillData, skillTagsDefault as skillTags, useCareerRecommendation, useDeadlines, useActiveProjects, useCurrentUserProfile } from "@/lib/db";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+
+const Dashboard = () => {
+  const { data: skillData = [] } = useSkillData();
+  const { data: careerRecommendation } = useCareerRecommendation();
+  const { data: deadlines = [] } = useDeadlines();
+  const { data: activeProjects = [] } = useActiveProjects();
+  const { profile: userProfile } = useCurrentUserProfile();
+
+  const navigate = useNavigate();
+  const validProjects = activeProjects && activeProjects.length > 0 ? activeProjects : [];
+  const totalProgress = validProjects.length > 0 ? Math.round(validProjects.reduce((a, p) => a + (p.progress || 0), 0) / validProjects.length) : 0;
+
+  return (
+    <AppLayout title="Dashboard" hideHeader>
+      <PageTransition>
+        {/* ========== MOBILE LAYOUT ========== */}
+        <div className="md:hidden space-y-5 overflow-x-hidden">
+          {/* Hero Greeting */}
+          <motion.div
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -i '' 's/userProfile.name.sp [Kllit(" ")[0]/userProfile?.name?.split(" ")?.[0] || "Student"/g' src/pages/Dashboa [Krrd.tsx[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -n "userProfile?.name" src/ [Kppages/Dashboard.tsx[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/pages/Dashboard.tsx | gr [Keep "userProfile.name"[?2004l
+              <h2 className="mt-0.5 text-[26px] font-extrabold leading-tight">{userProfile.name.split(" ")[0]}</h2>
+            <h2 className="text-2xl font-bold text-foreground">Welcome back, {userProfile.name.split(" ")[0]} <Hand className="h-5 w-5 inline ml-1" /></h2>
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep -C 3 "Welcome back" src/pag [Kees/Dashboard.tsx[?2004l
+        {/* ========== DESKTOP LAYOUT ========== */}
+        <div className="hidden md:block">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-foreground">Welcome back, {userProfile.name.split(" ")[0]} <Hand className="h-5 w-5 inline ml-1" /></h2>
+            <p className="text-muted-foreground">Your skills are growing. Keep building your future.</p>
+          </div>
+
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/pages/Settings.tsx | hea [Kdd -n 40[?2004l
+import { useState } from "react";
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Camera, Save, Bell, Globe, Shield, ChevronRight, Moon, Sun, LogOut, Monitor } from "lucide-react";
+import { useCurrentUserProfile } from "@/lib/db";
+import { motion } from "framer-motion";
+import { useTheme } from "@/hooks/use-theme";
+import { useToast } from "@/hooks/use-toast";
+import { useLogout } from "@/hooks/use-logout";
+import { LogoutDialog } from "@/components/LogoutDialog";
+import { useEffect } from "react";
+
+const Settings = () => {
+  const { profile: userProfile } = useCurrentUserProfile();
+  const { toast } = useToast();
+  const [name, setName] = useState(userProfile?.name || "");
+  const [faculty, setFaculty] = useState(userProfile?.faculty || "");
+  const [bio, setBio] = useState(userProfile?.bio || "");
+
+  useEffect(() => {
+    if (userProfile) {
+      setName(userProfile.name || "");
+      setFaculty(userProfile.faculty || "");
+      setBio(userProfile.bio || "");
+    }
+  }, [userProfile]);
+  const [language, setLanguage] = useState("th");
+  const [emailNotif, setEmailNotif] = useState(true);
+  const [lineNotif, setLineNotif] = useState(true);
+  const [deadlineNotif, setDeadlineNotif] = useState(true);
+  const [teamNotif, setTeamNotif] = useState(true);
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  cat src/pages/Settings.tsx | gre [Kpp -A 20 -B 5 "Avatar"[?2004l
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Camera, Save, Bell, Globe, Shield, ChevronRight, Moon, Sun, LogOut, Monitor } from "lucide-react";
+import { useCurrentUserProfile } from "@/lib/db";
+import { motion } from "framer-motion";
+import { useTheme } from "@/hooks/use-theme";
+import { useToast } from "@/hooks/use-toast";
+import { useLogout } from "@/hooks/use-logout";
+import { LogoutDialog } from "@/components/LogoutDialog";
+import { useEffect } from "react";
+
+const Settings = () => {
+  const { profile: userProfile } = useCurrentUserProfile();
+  const { toast } = useToast();
+  const [name, setName] = useState(userProfile?.name || "");
+  const [faculty, setFaculty] = useState(userProfile?.faculty || "");
+  const [bio, setBio] = useState(userProfile?.bio || "");
+
+  useEffect(() => {
+    if (userProfile) {
+      setName(userProfile.name || "");
+--
+        <div className="md:hidden space-y-5">
+          {/* Profile card */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="flex items-center gap-3.5 rounded-2xl border border-border/50 bg-card p-4">
+              <div className="relative">
+                <Avatar className="h-14 w-14">
+                  <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">{userProfile.avatar}</AvatarFallback>
+                </Avatar>
+                <button onClick={handleCamera} className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
+                  <Camera className="h-3 w-3" />
+                </button>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-bold text-foreground">{userProfile.name}</p>
+                <p className="text-[12px] text-muted-foreground">{userProfile.faculty}</p>
+                <Badge className="mt-1 rounded-full bg-primary/10 text-primary border-0 px-2 py-0.5 text-[10px] font-semibold">{userProfile.year}</Badge>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+            </div>
+          </motion.div>
+
+          {/* Notifications section */}
+          <div>
+            <p className="mb-2 px-1 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">การแจ้งเตือน</p>
+            <div className="overflow-hidden rounded-2xl border border-border/50 bg-card">
+              {[
+                { label: "Email", desc: "รับแจ้งเตือนผ่านอีเมล", value: emailNotif, set: setEmailNotif },
+                { label: "LINE", desc: "รับแจ้งเตือนผ่าน LINE", value: lineNotif, set: setLineNotif },
+--
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <Avatar className="h-20 w-20">
+                        <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">{userProfile.avatar}</AvatarFallback>
+                      </Avatar>
+                      <button className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-transform hover:scale-110">
+                        <Camera className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">{userProfile.name}</p>
+                      <Badge variant="secondary" className="mt-1 rounded-full bg-accent text-accent-foreground border-0 text-xs">{userProfile.year}</Badge>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl border-border/50" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="faculty">Faculty</Label>
+                      <Input id="faculty" value={faculty} onChange={(e) => setFaculty(e.target.value)} className="rounded-xl border-border/50" />
+                    </div>
+                  </div>
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  head -n 20 src/components/ui/ava [Kttar.tsx[?2004l
+import * as React from "react";
+import * as AvatarPrimitive from "@radix-ui/react-avatar";
+
+import { cn } from "@/lib/utils";
+
+const Avatar = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Root
+    ref={ref}
+    className={cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className)}
+    {...props}
+  />
+));
+Avatar.displayName = AvatarPrimitive.Root.displayName;
+
+const AvatarImage = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -i '' 's|<AvatarFallback|<Av [KaatarImage src={userProfile?.photoURL || userProfile?.avatar} />\n                [K    <AvatarFallback|g' src/pages/Profile.tsx[?2004l
+sed: 1: "s|<AvatarFallback|<Avat ...": bad flag in substitute command: '|'
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -i '' 's/<AvatarFallback/<Av [KaatarImage src={userProfile?.photoURL || userProfile?.avatar} \/>\n               [K     <AvatarFallback/g' src/pages/Profile.tsx[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep "AvatarImage" src/pages/Pro [Kffile.tsx[?2004l
+              <AvatarImage src={userProfile?.photoURL || userProfile?.avatar} />
+                  <AvatarImage src={userProfile?.photoURL || userProfile?.avatar} />
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep "import { Avatar" src/pages [K//Profile.tsx[?2004l
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -i '' 's/AvatarFallback }/Av [KaatarFallback, AvatarImage }/g' src/pages/Profile.tsx[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  grep "AvatarFallback" src/compon [Keents/TopBar.tsx[?2004l
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+          <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+          </AvatarFallback>
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  sed -i '' 's/AvatarFallback }/Av [KaatarFallback, AvatarImage }/g' src/components/TopBar.tsx && sed -i '' 's/<Avatar [KFFallback/<AvatarImage src={userProfile?.photoURL || userProfile?.avatar} \/>\n   [K         <AvatarFallback/g' src/components/TopBar.tsx[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  npx tsc --noEmit[?2004l
+[1G[0K⠙[1G[0K[1G[0K⠙[1G[0K[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h  nl -ba src/pages/Dashboard.tsx | [K  sed -n '1,340p'[?2004l
+     1	import { AppLayout } from "@/components/AppLayout";
+     2	import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
+     3	import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     4	import { Badge } from "@/components/ui/badge";
+     5	import { Button } from "@/components/ui/button";
+     6	import { Progress } from "@/components/ui/progress";
+     7	import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
+     8	import { ArrowRight, Calendar, FolderKanban, Flame, Trophy, Sparkles, TrendingUp, Hand } from "lucide-react";
+     9	import { useSkillData, skillTagsDefault as skillTags, useCareerRecommendation, useDeadlines, useActiveProjects, useCurrentUserProfile } from "@/lib/db";
+    10	import { motion } from "framer-motion";
+    11	import { useNavigate } from "react-router-dom";
+    12	
+    13	const FALLBACK_SKILL_DATA = [
+    14	  { skill: "Communication", value: 0, fullMark: 100 },
+    15	  { skill: "Teamwork", value: 0, fullMark: 100 },
+    16	  { skill: "Problem Solving", value: 0, fullMark: 100 },
+    17	  { skill: "Adaptability", value: 0, fullMark: 100 },
+    18	  { skill: "Time Management", value: 0, fullMark: 100 },
+    19	];
+    20	
+    21	const Dashboard = () => {
+    22	  const { data: skillData = [] } = useSkillData();
+    23	  const { data: careerRecommendation } = useCareerRecommendation();
+    24	  const { data: deadlines = [] } = useDeadlines();
+    25	  const { data: activeProjects = [] } = useActiveProjects();
+    26	  const { profile: userProfile } = useCurrentUserProfile();
+    27	
+    28	  const navigate = useNavigate();
+    29	  const validProjects = activeProjects && activeProjects.length > 0 ? activeProjects : [];
+    30	  const totalProgress = validProjects.length > 0 ? Math.round(validProjects.reduce((a, p) => a + (p.progress || 0), 0) / validProjects.length) : 0;
+    31	  const safeSkillData = skillData.length > 0 ? skillData : FALLBACK_SKILL_DATA;
+    32	  const hasSkillData = skillData.length > 0;
+    33	  const hasDeadlines = deadlines.length > 0;
+    34	  const hasProjects = activeProjects.length > 0;
+    35	  const displayName = userProfile?.name?.trim() ? userProfile.name.split(/\s+/)[0] : "คุณ";
+    36	  const careerTitle = careerRecommendation?.title || "ยังไม่มีคำแนะนำ";
+    37	  const careerScore = typeof careerRecommendation?.matchScore === "number" ? careerRecommendation.matchScore : 0;
+    38	
+    39	  return (
+    40	    <AppLayout title="Dashboard" hideHeader>
+    41	      <PageTransition>
+    42	        {/* ========== MOBILE LAYOUT ========== */}
+    43	        <div className="md:hidden space-y-5 overflow-x-hidden">
+    44	          {/* Hero Greeting */}
+    45	          <motion.div
+    46	            initial={{ opacity: 0, scale: 0.96 }}
+    47	            animate={{ opacity: 1, scale: 1 }}
+    48	            transition={{ duration: 0.35, ease: "easeOut" }}
+    49	            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-secondary px-5 py-5 text-primary-foreground"
+    50	          >
+    51	            <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/8" />
+    52	            <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-white/5" />
+    53	            <div className="relative z-10">
+    54	              <p className="text-sm font-medium opacity-80">สวัสดี <Hand className="h-4 w-4 inline" /></p>
+    55	              <h2 className="mt-0.5 text-[26px] font-extrabold leading-tight">{displayName}</h2>
+    56	              <p className="mt-1.5 text-sm opacity-70">ทักษะของคุณกำลังเติบโต <Sparkles className="h-4 w-4 inline ml-1 text-yellow-500" /></p>
+    57	
+    58	              <div className="mt-5 grid grid-cols-3 gap-2">
+    59	                {[
+    60	                  { icon: Flame, value: "7", label: "Streak" },
+    61	                  { icon: Trophy, value: `${careerScore}%`, label: "Match" },
+    62	                  { icon: TrendingUp, value: `${totalProgress}%`, label: "Progress" },
+    63	                ].map((stat) => (
+    64	                  <div key={stat.label} className="rounded-2xl bg-white/12 px-2 py-2.5 text-center backdrop-blur-sm">
+    65	                    <stat.icon className="mx-auto h-4.5 w-4.5 opacity-90" />
+    66	                    <p className="mt-1 text-[17px] font-extrabold leading-tight">{stat.value}</p>
+    67	                    <p className="text-[10px] font-medium opacity-70">{stat.label}</p>
+    68	                  </div>
+    69	                ))}
+    70	              </div>
+    71	            </div>
+    72	          </motion.div>
+    73	
+    74	          {/* Career Recommendation */}
+    75	          <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.12 }}>
+    76	            <button onClick={() => navigate("/career")} className="flex w-full items-center gap-3.5 rounded-2xl border border-border/50 bg-card p-4 text-left active:scale-[0.98] transition-transform">
+    77	              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/8">
+    78	                <Sparkles className="h-6 w-6 text-primary" />
+    79	              </div>
+    80	              <div className="min-w-0 flex-1">
+    81	                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">AI แนะนำ</p>
+    82	                <p className="truncate text-[15px] font-bold text-foreground">{careerTitle}</p>
+    83	                <div className="mt-0.5 flex items-center gap-1.5">
+    84	                  <span className="text-base font-extrabold text-primary">{careerScore}%</span>
+    85	                  <span className="text-[11px] text-muted-foreground">match</span>
+    86	                </div>
+    87	              </div>
+    88	              <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground/50" />
+    89	            </button>
+    90	          </motion.div>
+    91	
+    92	          {/* Deadlines - Horizontal scroll */}
+    93	          <div>
+    94	            <h3 className="mb-2.5 flex items-center gap-2 text-[15px] font-bold text-foreground">
+    95	              <Calendar className="h-4 w-4 text-primary" /> เดดไลน์
+    96	            </h3>
+    97	            <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
+    98	              {hasDeadlines ? deadlines.map((d, i) => (
+    99	                <motion.div
+   100	                  key={d.title}
+   101	                  initial={{ opacity: 0, y: 8 }}
+   102	                  animate={{ opacity: 1, y: 0 }}
+   103	                  transition={{ delay: 0.15 + i * 0.06 }}
+   104	                >
+   105	                  <div className="min-w-[150px] shrink-0 rounded-2xl border border-border/50 bg-card p-3.5">
+   106	                    <p className="text-[11px] font-bold text-primary">{d.date}</p>
+   107	                    <p className="mt-1 text-[13px] font-semibold leading-tight text-foreground">{d.title}</p>
+   108	                    <p className="mt-0.5 text-[11px] text-muted-foreground">{d.course}</p>
+   109	                  </div>
+   110	                </motion.div>
+   111	              )) : (
+   112	                <div className="min-w-[220px] rounded-2xl border border-dashed border-border/60 bg-card p-4 text-sm text-muted-foreground">
+   113	                  ยังไม่มีเดดไลน์ใน Firestore
+   114	                </div>
+   115	              )}
+   116	            </div>
+   117	          </div>
+   118	
+   119	          {/* Active Projects */}
+   120	          <div>
+   121	            <h3 className="mb-2.5 flex items-center gap-2 text-[15px] font-bold text-foreground">
+   122	              <FolderKanban className="h-4 w-4 text-primary" /> โปรเจกต์
+   123	            </h3>
+   124	            <div className="space-y-2.5">
+   125	              {hasProjects ? activeProjects.map((p, i) => (
+   126	                <motion.div
+   127	                  key={p.name}
+   128	                  initial={{ opacity: 0, x: -8 }}
+   129	                  animate={{ opacity: 1, x: 0 }}
+   130	                  transition={{ delay: 0.2 + i * 0.06 }}
+   131	                >
+   132	                  <button onClick={() => navigate("/projects")} className="flex w-full items-center gap-3.5 rounded-2xl border border-border/50 bg-card p-3.5 active:scale-[0.98] transition-transform">
+   133	                    <div className="relative h-12 w-12 shrink-0">
+   134	                      <svg className="h-12 w-12 -rotate-90" viewBox="0 0 48 48">
+   135	                        <circle cx="24" cy="24" r="20" fill="none" stroke="hsl(var(--accent))" strokeWidth="4" />
+   136	                        <circle cx="24" cy="24" r="20" fill="none" stroke="hsl(var(--primary))" strokeWidth="4"
+   137	                          strokeDasharray={`${((p.progress || 0) / 100) * 125.6} 125.6`} strokeLinecap="round" />
+   138	                      </svg>
+   139	                      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-foreground">{p.progress || 0}%</span>
+   140	                    </div>
+   141	                    <div className="min-w-0 flex-1">
+   142	                      <p className="truncate text-[14px] font-semibold text-foreground">{p.name}</p>
+   143	                      <p className="text-[11px] text-muted-foreground">{p.members} สมาชิก</p>
+   144	                    </div>
+   145	                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+   146	                  </button>
+   147	                </motion.div>
+   148	              )) : (
+   149	                <div className="rounded-2xl border border-dashed border-border/60 bg-card p-4 text-sm text-muted-foreground">
+   150	                  ยังไม่มีโปรเจกต์ใน Firestore
+   151	                </div>
+   152	              )}
+   153	            </div>
+   154	          </div>
+   155	
+   156	          {/* Skill Radar */}
+   157	          <div className="rounded-2xl border border-border/50 bg-card p-4">
+   158	            <h3 className="mb-1 text-[15px] font-bold text-foreground">Skill Identity</h3>
+   159	            <div className="mx-auto h-48 w-full min-h-[192px]">
+   160	              <ResponsiveContainer width="100%" height="100%">
+   161	                <RadarChart data={safeSkillData}>
+   162	                  <PolarGrid stroke="hsl(140 10% 90%)" />
+   163	                  <PolarAngleAxis dataKey="skill" tick={{ fill: "hsl(150 5% 45%)", fontSize: 10 }} />
+   164	                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+   165	                  <Radar dataKey="value" stroke="hsl(153 100% 20%)" fill="hsl(153 100% 20%)" fillOpacity={0.15} strokeWidth={2} />
+   166	                </RadarChart>
+   167	              </ResponsiveContainer>
+   168	            </div>
+   169	            {!hasSkillData && (
+   170	              <p className="mt-2 text-xs text-muted-foreground">ยังไม่มีข้อมูล Skill Data ใน Firestore</p>
+   171	            )}
+   172	            <div className="mt-1 flex flex-wrap gap-1.5">
+   173	              {skillTags.map((tag) => (
+   174	                <Badge key={tag} variant="secondary" className="rounded-full bg-accent text-accent-foreground border-0 px-2.5 py-0.5 text-[10px] font-medium">
+   175	                  {tag}
+   176	                </Badge>
+   177	              ))}
+   178	            </div>
+   179	          </div>
+   180	        </div>
+   181	
+   182	        {/* ========== DESKTOP LAYOUT ========== */}
+   183	        <div className="hidden md:block">
+   184	          <div className="mb-8">
+   185	            <h2 className="text-2xl font-bold text-foreground">Welcome back, {displayName} <Hand className="h-5 w-5 inline ml-1" /></h2>
+   186	            <p className="text-muted-foreground">Your skills are growing. Keep building your future.</p>
+   187	          </div>
+   188	
+   189	          <div className="grid gap-6 lg:grid-cols-3">
+   190	            <div className="space-y-6 lg:col-span-2">
+   191	              <StaggerItem>
+   192	                <Card className="rounded-2xl border-border/50">
+   193	                  <CardHeader><CardTitle className="text-lg">Your Skill Identity</CardTitle></CardHeader>
+   194	                  <CardContent>
+   195	                    <div className="mx-auto h-72 w-full max-w-md">
+   196	                      <ResponsiveContainer width="100%" height="100%">
+   197	                        <RadarChart data={safeSkillData}>
+   198	                          <PolarGrid stroke="hsl(140 10% 90%)" />
+   199	                          <PolarAngleAxis dataKey="skill" tick={{ fill: "hsl(150 5% 45%)", fontSize: 12 }} />
+   200	                          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+   201	                          <Radar dataKey="value" stroke="hsl(153 100% 20%)" fill="hsl(153 100% 20%)" fillOpacity={0.15} strokeWidth={2} />
+   202	                        </RadarChart>
+   203	                      </ResponsiveContainer>
+   204	                    </div>
+   205	                    {!hasSkillData && (
+   206	                      <p className="mt-3 text-sm text-muted-foreground">ยังไม่มีข้อมูล Skill Data ใน Firestore</p>
+   207	                    )}
+   208	                    <div className="mt-4 flex flex-wrap gap-2">
+   209	                      {skillTags.map((tag) => (
+   210	                        <Badge key={tag} variant="secondary" className="rounded-full bg-accent text-accent-foreground border-0 px-3 py-1 text-xs font-medium transition-colors duration-200 hover:bg-primary hover:text-primary-foreground">
+   211	                          {tag}
+   212	                        </Badge>
+   213	                      ))}
+   214	                    </div>
+   215	                  </CardContent>
+   216	                </Card>
+   217	              </StaggerItem>
+   218	            </div>
+   219	
+   220	            <StaggerContainer className="space-y-6">
+   221	              <StaggerItem>
+   222	                <Card className="card-hover rounded-2xl border-border/50">
+   223	                  <CardHeader className="pb-3"><CardTitle className="text-base">Career Recommendation</CardTitle></CardHeader>
+   224	                  <CardContent>
+   225	                    <p className="text-lg font-semibold text-foreground">{careerTitle}</p>
+   226	                    <div className="mt-2 flex items-center gap-2">
+   227	                      <span className="text-2xl font-bold text-primary">{careerScore}%</span>
+   228	                      <span className="text-sm text-muted-foreground">match</span>
+   229	                    </div>
+   230	                    <Button variant="ghost" onClick={() => navigate("/career")} className="mt-3 gap-1 px-0 text-primary hover:bg-transparent hover:text-primary/80">
+   231	                      View Insight <ArrowRight className="h-4 w-4" />
+   232	                    </Button>
+   233	                  </CardContent>
+   234	                </Card>
+   235	              </StaggerItem>
+   236	              <StaggerItem>
+   237	                <Card className="rounded-2xl border-border/50">
+   238	                  <CardHeader className="pb-3">
+   239	                    <CardTitle className="flex items-center gap-2 text-base"><Calendar className="h-4 w-4 text-primary" /> Upcoming Deadlines</CardTitle>
+   240	                  </CardHeader>
+   241	                  <CardContent className="space-y-3">
+   242	                    {hasDeadlines ? deadlines.map((d) => (
+   243	                      <div key={d.title} className="flex items-center justify-between">
+   244	                        <div>
+   245	                          <p className="text-sm font-medium text-foreground">{d.title}</p>
+   246	                          <p className="text-xs text-muted-foreground">{d.course}</p>
+   247	                        </div>
+   248	                        <span className="text-xs text-muted-foreground">{d.date}</span>
+   249	                      </div>
+   250	                    )) : (
+   251	                      <p className="text-sm text-muted-foreground">ยังไม่มีเดดไลน์ใน Firestore</p>
+   252	                    )}
+   253	                  </CardContent>
+   254	                </Card>
+   255	              </StaggerItem>
+   256	              <StaggerItem>
+   257	                <Card className="rounded-2xl border-border/50">
+   258	                  <CardHeader className="pb-3">
+   259	                    <CardTitle className="flex items-center gap-2 text-base"><FolderKanban className="h-4 w-4 text-primary" /> Active Projects</CardTitle>
+   260	                  </CardHeader>
+   261	                  <CardContent className="space-y-4">
+   262	                    {hasProjects ? activeProjects.map((p) => (
+   263	                      <div key={p.name}>
+   264	                        <div className="mb-1 flex items-center justify-between">
+   265	                          <p className="text-sm font-medium text-foreground">{p.name}</p>
+   266	                          <span className="text-xs text-muted-foreground">{p.progress || 0}%</span>
+   267	                        </div>
+   268	                        <Progress value={p.progress || 0} className="h-2 bg-accent [&>div]:bg-primary" />
+   269	                      </div>
+   270	                    )) : (
+   271	                      <p className="text-sm text-muted-foreground">ยังไม่มีโปรเจกต์ใน Firestore</p>
+   272	                    )}
+   273	                  </CardContent>
+   274	                </Card>
+   275	              </StaggerItem>
+   276	            </StaggerContainer>
+   277	          </div>
+   278	        </div>
+   279	      </PageTransition>
+   280	    </AppLayout>
+   281	  );
+   282	};
+   283	
+   284	export default Dashboard;
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J(base) addeen@Addeens-MacBook-Air-2 kulifeos % [K[?2004h
