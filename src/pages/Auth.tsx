@@ -5,7 +5,7 @@ import { GraduationCap, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { auth, googleProvider, db } from "@/lib/firebase";
-import { signInWithPopup, signOut, signInAnonymously } from "firebase/auth";
+import { signInWithPopup, signOut, signInAnonymously, signInWithRedirect } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -21,6 +21,41 @@ const Logo = () => (
   </div>
 );
 
+const getFriendlyAuthError = (error: unknown) => {
+  const code = (error as { code?: string } | null)?.code;
+  if (code === "auth/unauthorized-domain") {
+    return `Google login is blocked on ${window.location.hostname}. Open this page via http://localhost:${window.location.port} or add this domain in Firebase Console > Authentication > Settings > Authorized domains.`;
+  }
+  return "เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง";
+};
+
+const isFirestorePermissionDenied = (error: unknown) => {
+  const code = (error as { code?: string } | null)?.code || "";
+  const message = (error as { message?: string } | null)?.message || "";
+  return code.includes("permission-denied") || /insufficient permissions/i.test(message);
+};
+
+const persistLocalTeacherProfile = (params: {
+  uid: string;
+  email: string;
+  onboardingStep?: number;
+}) => {
+  const now = Date.now();
+  const profile = {
+    id: `T${params.uid.substring(0, 8).toUpperCase()}`,
+    uid: params.uid,
+    email: params.email,
+    role: "teacher" as const,
+    onboardingStep: params.onboardingStep ?? 1,
+    onboardingData: {},
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  localStorage.setItem(`ku_profile_${params.uid}`, JSON.stringify(profile));
+  localStorage.setItem("ku_current_user_id", params.uid);
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
@@ -29,8 +64,8 @@ const Auth = () => {
   
   useEffect(() => {
     if (userProfile && !authLoading) {
-      if (userProfile.onboardingStep >= 4) {
-        navigate("/dashboard", { replace: true });
+      if (userProfile.onboardingStep >= 1) {
+        navigate("/", { replace: true });
       } else {
         navigate("/onboarding", { replace: true });
       }
@@ -52,7 +87,17 @@ const Auth = () => {
       }
 
       const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
+      let userSnap;
+      try {
+        userSnap = await getDoc(userRef);
+      } catch (error: unknown) {
+        if (isFirestorePermissionDenied(error)) {
+          persistLocalTeacherProfile({ uid: user.uid, email: user.email || "", onboardingStep: 1 });
+          navigate("/");
+          return;
+        }
+        throw error;
+      }
 
       if (userSnap.exists()) {
         const userData = userSnap.data();
@@ -79,12 +124,24 @@ const Auth = () => {
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
-        await setDoc(userRef, newUser);
+        try {
+          await setDoc(userRef, newUser);
+        } catch (error: unknown) {
+          if (!isFirestorePermissionDenied(error)) {
+            throw error;
+          }
+          persistLocalTeacherProfile({ uid: user.uid, email: user.email || "", onboardingStep: 1 });
+        }
         navigate("/onboarding");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Login failed:", err);
-      setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง");
+      const errorCode = (err as { code?: string } | null)?.code;
+      if (errorCode === "auth/popup-blocked" || errorCode === "auth/operation-not-supported-in-this-environment") {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+      setError(getFriendlyAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -100,20 +157,27 @@ const Auth = () => {
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          id: `TGUEST${user.uid.substring(0, 8).toUpperCase()}`,
-          uid: user.uid,
-          fullName: "ผู้เยี่ยมชม (Guest Teacher)",
-          email: "guest.teacher@ku.th",
-          role: "teacher",
-          isGuest: true,
-          onboardingStep: 1, // Bypass onboarding
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
+        try {
+          await setDoc(userRef, {
+            id: `TGUEST${user.uid.substring(0, 8).toUpperCase()}`,
+            uid: user.uid,
+            fullName: "ผู้เยี่ยมชม (Guest Teacher)",
+            email: "guest.teacher@ku.th",
+            role: "teacher",
+            isGuest: true,
+            onboardingStep: 1, // Bypass onboarding
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          });
+        } catch (error: unknown) {
+          if (!isFirestorePermissionDenied(error)) {
+            throw error;
+          }
+          persistLocalTeacherProfile({ uid: user.uid, email: "guest.teacher@ku.th", onboardingStep: 1 });
+        }
       }
       navigate("/");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       setError("เกิดข้อผิดพลาดในการเข้าสู่ผู้เยี่ยมชม");
     } finally {

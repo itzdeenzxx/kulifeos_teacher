@@ -106,16 +106,18 @@ const Settings = () => {
       }
 
       if (photoURL) {
-        const stored = JSON.parse(localStorage.getItem("ku_profile") || "{}");
-        localStorage.setItem("ku_profile", JSON.stringify({ ...stored, photoURL }));
+        const scopedKey = `ku_profile_${authUser?.uid || "guest"}`;
+        const stored = JSON.parse(localStorage.getItem(scopedKey) || "{}");
+        localStorage.setItem(scopedKey, JSON.stringify({ ...stored, photoURL }));
         setUserProfile((prev: any) => ({ ...prev, photoURL }));
         toast({ title: "อัปโหลดสำเร็จ ✓", description: "รูปโปรไฟล์ของคุณได้รับการอัปเดตแล้ว" });
       } else {
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64Url = reader.result as string;
-          const stored = JSON.parse(localStorage.getItem("ku_profile") || "{}");
-          localStorage.setItem("ku_profile", JSON.stringify({ ...stored, photoURL: base64Url }));
+          const scopedKey = `ku_profile_${authUser?.uid || "guest"}`;
+          const stored = JSON.parse(localStorage.getItem(scopedKey) || "{}");
+          localStorage.setItem(scopedKey, JSON.stringify({ ...stored, photoURL: base64Url }));
           setUserProfile((prev: any) => ({ ...prev, photoURL: base64Url }));
           toast({ title: "อัปโหลดสำเร็จ ✓", description: "รูปโปรไฟล์จำลองได้รับการอัปเดตแล้ว" });
         };

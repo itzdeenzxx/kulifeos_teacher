@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Users, CheckCircle, Clock, QrCode, MoreVertical, Sparkles, ChevronRight, X } from "lucide-react";
 import { useTeacherActivities } from "@/lib/db";
 import { db } from "@/lib/firebase";
-import { collection, doc, addDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { ClassroomQRDialog } from "@/components/teacher/ClassroomQRDialog";
@@ -23,6 +23,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+function buildClassroomCodeFromId(id: string) {
+  return `KU-${id.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6)}`;
+}
 
 const bannerColors = [
   "from-[hsl(153,100%,20%)] to-[hsl(153,80%,30%)]",
@@ -35,7 +39,12 @@ const TeacherDashboard = () => {
   const { authUser } = useAuth();
   const { toast } = useToast();
   const { data: teacherActivities = [] } = useTeacherActivities();
-  const [qrActivity, setQrActivity] = useState<{ id: string | number; name: string } | null>(null);
+  const [qrActivity, setQrActivity] = useState<{
+    id: string | number;
+    name: string;
+    classroomCode?: string;
+    joinPath?: string;
+  } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -101,7 +110,7 @@ const TeacherDashboard = () => {
         toast({ title: "อัปเดต Classroom สำเร็จ 🎉", description: "ข้อมูลห้องเรียนถูกแก้ไขแล้ว" });
       } else {
         // Create mode
-        await addDoc(collection(db, "teacherActivities"), {
+        const createdDoc = await addDoc(collection(db, "teacherActivities"), {
           ownerId: authUser?.uid || "unknown",
           name,
           description,
@@ -111,6 +120,13 @@ const TeacherDashboard = () => {
           groups: 0,
           status: "waiting",
           createdAt: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
+        });
+
+        const classroomCode = buildClassroomCodeFromId(createdDoc.id);
+        await updateDoc(doc(db, "teacherActivities", createdDoc.id), {
+          classroomCode,
+          joinPath: `/join/${createdDoc.id}`,
+          updatedAt: Date.now(),
         });
         toast({ title: "สร้าง Classroom สำเร็จ 🎉", description: "คุณสามารถเริ่มเพิ่มนิสิตเข้าห้องเรียนได้เลย" });
       }
@@ -303,7 +319,7 @@ const TeacherDashboard = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setQrActivity({ id: activity.id, name: activity.name })}>
+                            <DropdownMenuItem onClick={() => setQrActivity({ id: activity.id, name: activity.name, classroomCode: activity.classroomCode, joinPath: activity.joinPath })}>
                               <QrCode className="mr-2 h-4 w-4" /> QR Code
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEditDialog(activity)}>แก้ไข</DropdownMenuItem>
@@ -353,7 +369,7 @@ const TeacherDashboard = () => {
                           variant="outline"
                           size="sm"
                           className="rounded-lg text-xs"
-                          onClick={() => setQrActivity({ id: activity.id, name: activity.name })}
+                          onClick={() => setQrActivity({ id: activity.id, name: activity.name, classroomCode: activity.classroomCode, joinPath: activity.joinPath })}
                         >
                           <QrCode className="h-3.5 w-3.5" />
                         </Button>
