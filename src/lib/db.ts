@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { collection, doc, getDoc, getDocs, query, addDoc, updateDoc, arrayUnion, where, onSnapshot, serverTimestamp, orderBy, runTransaction, increment, writeBatch } from "firebase/firestore";
 import { db } from "./firebase";
 import { useAuth } from "@/hooks/useAuth";
+import { evaluateTeacherPolicy } from "@/lib/teacherPolicy";
 
 // Generic hook to fetch a document
 export function useFirestoreDoc<T>(collectionName: string, docId?: string, defaultState: T | null = null) {
@@ -136,6 +137,40 @@ export interface GroupMember {
   studentName: string;
   skills: string[];
   interests: string[];
+}
+
+async function getTeacherPolicyByUid(uid?: string) {
+  if (!uid) {
+    return evaluateTeacherPolicy(null);
+  }
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    if (!snap.exists()) {
+      return evaluateTeacherPolicy(null);
+    }
+    const data = snap.data() as {
+      isGuest?: boolean;
+      isTeacherVerified?: boolean;
+      verificationStatus?: "trusted-ku" | "verified-non-ku" | "unverified-non-ku";
+    };
+    return evaluateTeacherPolicy(data);
+  } catch {
+    return evaluateTeacherPolicy(null);
+  }
+}
+
+async function assertCanPublishAssignments(teacherUid?: string) {
+  const policy = await getTeacherPolicyByUid(teacherUid);
+  if (!policy.canPublishAssignments) {
+    throw new Error("บัญชีอาจารย์ยังไม่ยืนยันตัวตน ไม่สามารถ publish assignment ได้จนกว่าจะยืนยัน");
+  }
+}
+
+async function assertCanGenerateGroups(teacherUid?: string) {
+  const policy = await getTeacherPolicyByUid(teacherUid);
+  if (!policy.canGenerateGroups) {
+    throw new Error("บัญชีอาจารย์ยังไม่ยืนยันตัวตน ไม่สามารถ generate groups ได้จนกว่าจะยืนยัน");
+  }
 }
 
 // Specific feature fetchers
@@ -349,6 +384,7 @@ export function useGroupMembers(classroomId?: string) {
 }
 
 export async function createAssignment(input: Omit<ClassroomAssignment, "id" | "createdAt">) {
+  await assertCanPublishAssignments(input.createdByUid);
   const normalizedTargetIds = Array.from(new Set((input.targetIds || []).map((item) => String(item).trim()).filter(Boolean)));
 
   const created = await addDoc(collection(db, "assignments"), {
@@ -534,6 +570,7 @@ export async function generateClassroomGroups(params: {
   requiredSkills: string[];
   aiSuggestedGroups?: Array<{ name: string; memberUids: string[]; reason?: string }>;
 }) {
+  await assertCanGenerateGroups(params.teacherUid);
   const students = await getClassroomStudentProfiles(params.classroomId);
   if (students.length === 0) {
     return { groupCount: 0, memberCount: 0 };

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Clock, Send } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { evaluateTeacherPolicy } from "@/lib/teacherPolicy";
 import {
   createAssignment,
   updateAssignmentTargetType,
@@ -33,7 +34,7 @@ function formatDateLabel(value?: string) {
 
 const ClassroomWork = () => {
   const { classroomId } = useParams();
-  const { authUser } = useAuth();
+  const { authUser, userProfile } = useAuth();
   const { toast } = useToast();
   const { data: teacherActivities = [] } = useTeacherActivities();
   const classroom = teacherActivities.find((item) => String(item.id) === String(classroomId));
@@ -53,6 +54,8 @@ const ClassroomWork = () => {
     allowTextLink: true,
     allowFileUpload: true,
   });
+
+  const teacherPolicy = useMemo(() => evaluateTeacherPolicy(userProfile), [userProfile]);
 
   const membersByGroupId = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -121,6 +124,14 @@ const ClassroomWork = () => {
 
   const handleCreateAssignment = async () => {
     if (!authUser?.uid || !classroomId) return;
+    if (!teacherPolicy.canPublishAssignments) {
+      toast({
+        title: "ยัง publish งานไม่ได้",
+        description: "ยืนยันตัวตนอาจารย์ก่อน จึงจะเผยแพร่ assignment ได้",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!assignmentForm.title.trim() || !assignmentForm.dueDate) {
       toast({ title: "ข้อมูลไม่ครบ", description: "กรุณากรอกชื่องานและกำหนดส่ง", variant: "destructive" });
       return;
@@ -193,12 +204,22 @@ const ClassroomWork = () => {
               <span className="rounded-full bg-white px-3 py-1 text-primary font-medium">Work</span>
               <Link to={`/classroom/${classroomId}/people`} className="rounded-full bg-white/15 px-3 py-1">People</Link>
             </div>
+            {!teacherPolicy.isVerified && (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                บัญชีอาจารย์ยังไม่ยืนยันตัวตน: ยังไม่สามารถ publish assignment หรือ generate groups ได้
+              </div>
+            )}
+            {teacherPolicy.isGuest && (
+              <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+                โหมดผู้เยี่ยมชม: ใช้งานได้ครบทุกฟีเจอร์เพื่อสาธิต แต่ข้อมูลถือเป็นตัวอย่าง
+              </div>
+            )}
           </div>
 
           <Card className="rounded-2xl border-border/50">
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle className="text-base">Assignments</CardTitle>
-              <Button className="rounded-xl" onClick={() => setAssignmentOpen(true)}>
+              <Button className="rounded-xl" onClick={() => setAssignmentOpen(true)} disabled={!teacherPolicy.canPublishAssignments}>
                 <Send className="mr-2 h-4 w-4" /> เพิ่มงาน
               </Button>
             </CardHeader>
@@ -250,7 +271,11 @@ const ClassroomWork = () => {
         <DialogContent className="rounded-2xl sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>เพิ่ม Assignment</DialogTitle>
-            <DialogDescription>สร้างงานได้ทันทีแบบ Google Classroom แล้วค่อยเปลี่ยนประเภทภายหลัง</DialogDescription>
+            <DialogDescription>
+              {teacherPolicy.canPublishAssignments
+                ? "สร้างงานได้ทันทีแบบ Google Classroom แล้วค่อยเปลี่ยนประเภทภายหลัง"
+                : "บัญชีอาจารย์ยังไม่ยืนยันตัวตน จึงยังไม่สามารถเผยแพร่ assignment ได้"}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div className="space-y-1.5">
@@ -269,7 +294,7 @@ const ClassroomWork = () => {
               <Button type="button" variant={assignmentForm.allowTextLink ? "default" : "outline"} className="rounded-xl" onClick={() => setAssignmentForm((prev) => ({ ...prev, allowTextLink: !prev.allowTextLink }))}>Text/Link</Button>
               <Button type="button" variant={assignmentForm.allowFileUpload ? "default" : "outline"} className="rounded-xl" onClick={() => setAssignmentForm((prev) => ({ ...prev, allowFileUpload: !prev.allowFileUpload }))}>File Upload</Button>
             </div>
-            <Button className="w-full rounded-xl" onClick={handleCreateAssignment} disabled={assignmentSubmitting}>
+            <Button className="w-full rounded-xl" onClick={handleCreateAssignment} disabled={assignmentSubmitting || !teacherPolicy.canPublishAssignments}>
               {assignmentSubmitting ? "กำลังบันทึก..." : "สร้างงาน"}
             </Button>
           </div>

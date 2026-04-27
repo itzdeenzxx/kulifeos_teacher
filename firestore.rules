@@ -25,6 +25,17 @@ service cloud.firestore {
       return signedIn() && currentRole() == "teacher";
     }
 
+    function isVerifiedTeacherOrGuest() {
+      return isTeacher()
+        && hasUserDoc(request.auth.uid)
+        && (
+          userDoc(request.auth.uid).data.isGuest == true
+          || userDoc(request.auth.uid).data.isTeacherVerified == true
+          || userDoc(request.auth.uid).data.verificationStatus == "trusted-ku"
+          || userDoc(request.auth.uid).data.verificationStatus == "verified-non-ku"
+        );
+    }
+
     function isStudent() {
       return signedIn() && currentRole() == "student";
     }
@@ -82,7 +93,7 @@ service cloud.firestore {
       allow read: if signedIn()
         && (isTeacher() || isClassMember(resource.data.classroomId));
 
-      allow create: if isTeacher()
+      allow create: if isVerifiedTeacherOrGuest()
         && isClassroomOwner(request.resource.data.classroomId);
 
       allow update, delete: if isTeacher()
@@ -114,18 +125,18 @@ service cloud.firestore {
     match /groups/{groupId} {
       allow read: if signedIn()
         && (isTeacher() || isClassMember(resource.data.classroomId));
-      allow create: if isTeacher()
+      allow create: if isVerifiedTeacherOrGuest()
         && isClassroomOwner(request.resource.data.classroomId);
-      allow update, delete: if isTeacher()
+      allow update, delete: if isVerifiedTeacherOrGuest()
         && isClassroomOwner(resource.data.classroomId);
     }
 
     match /groupMembers/{memberId} {
       allow read: if signedIn()
         && (isTeacher() || isClassMember(resource.data.classroomId));
-      allow create: if isTeacher()
+      allow create: if isVerifiedTeacherOrGuest()
         && isClassroomOwner(request.resource.data.classroomId);
-      allow update, delete: if isTeacher()
+      allow update, delete: if isVerifiedTeacherOrGuest()
         && isClassroomOwner(resource.data.classroomId);
     }
 

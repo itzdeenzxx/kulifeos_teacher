@@ -68,7 +68,7 @@ export const cleanResumeText = (text: string) =>
 
 const getModelByMode = (mode: ResumeParseMode) => {
   if (mode === "pdfText") return "google/gemma-3n-E4B-it";
-  return "Qwen/Qwen3-VL-8B-Instruct";
+  return "google/gemma-3n-E4B-it";
 };
 
 const toStringOrEmpty = (v: unknown) => (typeof v === "string" ? v : "");
@@ -344,7 +344,7 @@ ${JSON.stringify(payload)}`;
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      model: "google/gemma-3n-E4B-it",
       temperature: 0.2,
       messages: [{ role: "user", content: prompt }],
     }),

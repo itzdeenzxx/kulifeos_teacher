@@ -46,6 +46,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { generateAIGroupsWithTogether } from "@/lib/aiAnalyze";
+import { evaluateTeacherPolicy } from "@/lib/teacherPolicy";
 
 const groupingModeOptions: { value: GroupingMode; label: string; description: string }[] = [
   {
@@ -79,7 +80,7 @@ function formatDateLabel(value?: string) {
 const ClassroomDetail = () => {
   const { classroomId } = useParams();
   const [, setSearchParams] = useSearchParams();
-  const { authUser } = useAuth();
+  const { authUser, userProfile } = useAuth();
   const { toast } = useToast();
 
   const { data: teacherActivities = [] } = useTeacherActivities();
@@ -135,6 +136,8 @@ const ClassroomDetail = () => {
   const [reviewingSubmissionId, setReviewingSubmissionId] = useState<string>("");
   const [feedbackText, setFeedbackText] = useState("");
   const [scoreValue, setScoreValue] = useState("");
+
+  const teacherPolicy = useMemo(() => evaluateTeacherPolicy(userProfile), [userProfile]);
 
   const progress = useMemo(() => {
     return calculateClassroomProgress({
@@ -340,6 +343,14 @@ const ClassroomDetail = () => {
 
   const handleCreateAssignment = async () => {
     if (!authUser?.uid || !classroomId) return;
+    if (!teacherPolicy.canPublishAssignments) {
+      toast({
+        title: "ยัง publish งานไม่ได้",
+        description: "ยืนยันตัวตนอาจารย์ก่อน จึงจะเผยแพร่ assignment ได้",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!assignmentForm.title.trim() || !assignmentForm.dueDate) {
       toast({ title: "Incomplete Form", description: "Please provide assignment title and due date.", variant: "destructive" });
       return;
@@ -386,6 +397,14 @@ const ClassroomDetail = () => {
 
   const handleGenerateGroups = async () => {
     if (!authUser?.uid || !classroomId) return;
+    if (!teacherPolicy.canGenerateGroups) {
+      toast({
+        title: "ยังจัดกลุ่มไม่ได้",
+        description: "ยืนยันตัวตนอาจารย์ก่อน จึงจะ generate groups ได้",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const hasGroupAssignment = assignments.some((item) => item.targetType === "group");
     const classroomConfiguredForGroup = classroom.defaultWorkMode === "group";
@@ -507,6 +526,14 @@ const ClassroomDetail = () => {
 
   const finishWizard = async () => {
     if (!authUser?.uid || !classroomId) return;
+    if (!teacherPolicy.canPublishAssignments) {
+      toast({
+        title: "ยัง Setup ไม่ได้",
+        description: "บัญชีอาจารย์ยังไม่ยืนยันตัวตน จึงยังไม่สามารถสร้าง assignment ในขั้นตอน setup",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!wizardForm.assignmentTitle.trim() || !wizardForm.dueDate) {
       toast({ title: "ข้อมูลไม่ครบ", description: "กรุณาระบุชื่องานและวันครบกำหนด", variant: "destructive" });
       return;
@@ -534,7 +561,7 @@ const ClassroomDetail = () => {
         createdByUid: authUser.uid,
       });
 
-      if (wizardForm.workMode === "group" && enrollments.length > 0) {
+      if (wizardForm.workMode === "group" && enrollments.length > 0 && teacherPolicy.canGenerateGroups) {
         const aiResult = await generateAIGroupsWithTogether({
           groupSize: numericMembers,
           requiredSkills: wizardForm.requiredSkills,
@@ -645,6 +672,16 @@ const ClassroomDetail = () => {
                 บัญชีอาจารย์ยังไม่ยืนยันตัวตน ระบบจะแสดงสถานะนี้ให้นิสิตทราบเพื่อความปลอดภัย
               </div>
             )}
+            {!teacherPolicy.isVerified && (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                โหมดจำกัดสิทธิ์: ยังไม่สามารถ publish assignment และ generate groups ได้จนกว่าจะยืนยันตัวตน
+              </div>
+            )}
+            {teacherPolicy.isGuest && (
+              <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+                โหมดผู้เยี่ยมชม: ทดลองใช้งานได้ครบทุกฟีเจอร์ แต่เป็นข้อมูลตัวอย่าง
+              </div>
+            )}
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -720,7 +757,7 @@ const ClassroomDetail = () => {
               <Card className="rounded-2xl border-border/50">
                 <CardHeader className="flex-row items-center justify-between">
                   <CardTitle className="text-base inline-flex items-center gap-2"><FolderKanban className="h-4 w-4" /> Assignment + Submission</CardTitle>
-                  <Button className="rounded-xl" onClick={() => setAssignmentOpen(true)}>
+                  <Button className="rounded-xl" onClick={() => setAssignmentOpen(true)} disabled={!teacherPolicy.canPublishAssignments}>
                     <Send className="h-4 w-4 mr-2" /> Create Assignment
                   </Button>
                 </CardHeader>
@@ -855,7 +892,7 @@ const ClassroomDetail = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button className="rounded-xl" onClick={handleGenerateGroups} disabled={groupingLoading}>
+                    <Button className="rounded-xl" onClick={handleGenerateGroups} disabled={groupingLoading || !teacherPolicy.canGenerateGroups}>
                       {groupingLoading ? "Generating..." : "Generate Groups"}
                     </Button>
                   </div>
@@ -923,6 +960,7 @@ const ClassroomDetail = () => {
                   {enrollments.length === 0 && <p className="text-sm text-muted-foreground">No students enrolled yet.</p>}
                   {enrollments.map((enrollment) => {
                     const fromGroup = groupMembers.find((member) => member.studentUid === enrollment.studentUid);
+                    const groupName = (fromGroup as unknown as { groupName?: string } | undefined)?.groupName;
                     return (
                       <div key={enrollment.id} className="rounded-xl border border-border/50 p-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -934,7 +972,7 @@ const ClassroomDetail = () => {
                             <p className="text-xs text-muted-foreground">source: {enrollment.source}</p>
                           </div>
                         </div>
-                        {fromGroup?.groupName && <Badge variant="secondary" className="border-0">{fromGroup.groupName}</Badge>}
+                        {groupName && <Badge variant="secondary" className="border-0">{groupName}</Badge>}
                       </div>
                     );
                   })}
@@ -1175,7 +1213,11 @@ const ClassroomDetail = () => {
         <DialogContent className="rounded-2xl sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Create Assignment</DialogTitle>
-            <DialogDescription>สร้างงานเดี่ยวหรืองานกลุ่ม และเปิดรับข้อความ/ลิงก์/ไฟล์ได้</DialogDescription>
+            <DialogDescription>
+              {teacherPolicy.canPublishAssignments
+                ? "สร้างงานเดี่ยวหรืองานกลุ่ม และเปิดรับข้อความ/ลิงก์/ไฟล์ได้"
+                : "บัญชีอาจารย์ยังไม่ยืนยันตัวตน จึงยังไม่สามารถเผยแพร่ assignment ได้"}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div className="space-y-1.5">
@@ -1220,7 +1262,7 @@ const ClassroomDetail = () => {
                 File Upload
               </Button>
             </div>
-            <Button className="w-full rounded-xl" onClick={handleCreateAssignment} disabled={assignmentSubmitting}>
+            <Button className="w-full rounded-xl" onClick={handleCreateAssignment} disabled={assignmentSubmitting || !teacherPolicy.canPublishAssignments}>
               {assignmentSubmitting ? "Saving..." : "Create Assignment"}
             </Button>
           </div>

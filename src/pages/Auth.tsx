@@ -61,6 +61,7 @@ const persistLocalTeacherProfile = (params: {
   uid: string;
   email: string;
   onboardingStep?: number;
+  isGuest?: boolean;
   isTeacherVerified?: boolean;
   verificationStatus?: "trusted-ku" | "verified-non-ku" | "unverified-non-ku";
 }) => {
@@ -70,6 +71,7 @@ const persistLocalTeacherProfile = (params: {
     uid: params.uid,
     email: params.email,
     role: "teacher" as const,
+    isGuest: !!params.isGuest,
     isTeacherVerified: params.isTeacherVerified ?? /@ku\.th$/i.test(params.email),
     verificationStatus: params.verificationStatus || (/@ku\.th$/i.test(params.email) ? "trusted-ku" : "unverified-non-ku"),
     onboardingStep: params.onboardingStep ?? 1,
@@ -330,7 +332,7 @@ const Auth = () => {
           if (!isFirestorePermissionDenied(error)) {
             throw error;
           }
-          persistLocalTeacherProfile({ uid: user.uid, email: "guest.teacher@ku.th", onboardingStep: 1, isTeacherVerified: true, verificationStatus: "trusted-ku" });
+          persistLocalTeacherProfile({ uid: user.uid, email: "guest.teacher@ku.th", onboardingStep: 1, isGuest: true, isTeacherVerified: true, verificationStatus: "trusted-ku" });
         }
       }
       navigate("/");
