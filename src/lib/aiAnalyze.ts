@@ -283,6 +283,91 @@ export interface ProfileAnalysisResult {
   analysis: string;
 }
 
+export interface AICandidateStudent {
+  uid: string;
+  name: string;
+  skills: string[];
+  interests: string[];
+}
+
+export interface AIGroupingRequest {
+  groupSize: number;
+  requiredSkills: string[];
+  students: AICandidateStudent[];
+}
+
+export interface AIGroupingResponse {
+  groups: Array<{
+    name: string;
+    memberUids: string[];
+    reason: string;
+  }>;
+}
+
+export async function generateAIGroupsWithTogether(input: AIGroupingRequest): Promise<AIGroupingResponse | null> {
+  const apiKey = import.meta.env.VITE_TOGETHER_API_KEY;
+  if (!apiKey) return null;
+
+  const payload = {
+    groupSize: Math.max(2, Number(input.groupSize) || 4),
+    requiredSkills: input.requiredSkills,
+    students: input.students,
+  };
+
+  const prompt = `You are an AI classroom grouping assistant.
+Given JSON data for students and target skills, create balanced groups for project work.
+
+Rules:
+- Respect groupSize as much as possible.
+- Prioritize complementary skills based on requiredSkills.
+- Keep skill level balanced.
+- Output ONLY strict JSON, no markdown.
+
+Required output format:
+{
+  "groups": [
+    {
+      "name": "A1",
+      "memberUids": ["uid1", "uid2"],
+      "reason": "short Thai explanation"
+    }
+  ]
+}
+
+Input:
+${JSON.stringify(payload)}`;
+
+  const res = await fetch("https://api.together.xyz/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      temperature: 0.2,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  if (!res.ok) {
+    console.error("Together AI grouping error:", await res.text());
+    return null;
+  }
+
+  const data = await res.json();
+  const raw = data?.choices?.[0]?.message?.content ?? "";
+  try {
+    const cleaned = String(raw).replace(/```json/gi, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleaned) as AIGroupingResponse;
+    if (!Array.isArray(parsed.groups)) return null;
+    return parsed;
+  } catch (error) {
+    console.error("Failed to parse Together AI grouping response", error, raw);
+    return null;
+  }
+}
+
 const PROFILE_ANALYSIS_PROMPT = `You are an expert, realistic career counselor and profiler.
 I will pass you a JSON containing a user's profile data (name, faculty, skills, interests, experiences, projects).
 Your task is to critically analyze this data and return ONLY strict JSON in the following format, with NO code blocks, markdown mapping, or extra text.

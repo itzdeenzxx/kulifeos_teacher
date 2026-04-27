@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { collection, doc, getDoc, getDocs, query, addDoc, updateDoc, arrayUnion, where, onSnapshot, serverTimestamp, orderBy, runTransaction, increment, writeBatch } from "firebase/firestore";
 import { db } from "./firebase";
 import { useAuth } from "@/hooks/useAuth";
-import * as mockData from "./mockData";
 
 // Generic hook to fetch a document
 export function useFirestoreDoc<T>(collectionName: string, docId?: string, defaultState: T | null = null) {
@@ -74,7 +73,7 @@ export interface TaskItem { id: string; title: string; description?: string; sta
 export interface ProjectSpace { id: string; name: string; description: string; ownerId?: string; members: { id?: string; name: string; avatar: string; role: string }[]; tasks: TaskItem[]; classroomId?: number; groupName?: string; }
 export type DbProjectSpace = ProjectSpace;
 
-export type GroupingMode = "balanced" | "complementary";
+export type GroupingMode = "random" | "skill" | "interest";
 
 export interface ClassroomAssignment {
   id: string;
@@ -125,6 +124,7 @@ export interface ClassroomGroup {
   mode: GroupingMode;
   membersPerGroup: number;
   requiredSkills: string[];
+  aiReason?: string;
   createdAt?: any;
 }
 
@@ -171,10 +171,10 @@ export function useCurrentUserProfile() {
 }
 
 export function useTeacherActivities() { 
-  return useFirestoreCollection<any>("teacherActivities", [], mockData.teacherActivities);
+  return useFirestoreCollection<any>("teacherActivities", [], []);
 }
-export function useTeacherStudents() { return useFirestoreCollection<any>("teacherStudents", [], mockData.teacherStudents); }
-export function useNotifications() { return useFirestoreCollection<any>("notifications", [], mockData.notifications); }
+export function useTeacherStudents() { return useFirestoreCollection<any>("teacherStudents", [], []); }
+export function useNotifications() { return useFirestoreCollection<any>("notifications", [], []); }
 export function useProjectSpaces(userId?: string) {
   const [data, setData] = useState<ProjectSpace[]>([]);
   const [loading, setLoading] = useState(true);
@@ -193,11 +193,11 @@ export function useProjectSpaces(userId?: string) {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as ProjectSpace);
-      setData(items.length > 0 ? items : mockData.myProjectSpaces);
+      setData(items);
       setLoading(false);
     }, (err) => {
       console.error("Error fetching projectSpaces:", err);
-      setData(mockData.myProjectSpaces);
+      setData([]);
       setLoading(false);
     });
 
@@ -206,15 +206,15 @@ export function useProjectSpaces(userId?: string) {
 
   return { data, loading };
 }
-export function useTeammates() { return useFirestoreCollection<any>("teammates", [], mockData.teammates); }
-export function useDeadlines() { return useFirestoreCollection<any>("deadlines", [], mockData.deadlines); }
-export function useActiveProjects() { return useFirestoreCollection<any>("activeProjects", [], mockData.activeProjects); }
-export function usePortfolioProjects() { return useFirestoreCollection<any>("portfolioProjects", [], mockData.portfolioProjects); }
-export function useExperienceTimeline() { return useFirestoreCollection<any>("experienceTimeline", [], mockData.experienceTimeline); }
-export function useSkillData() { return useFirestoreCollection<any>("skillData", [], mockData.skillData); }
-export function useSkillGapData() { return useFirestoreCollection<any>("skillGapData", [], mockData.skillGapData); }
-export function useGrowthTimeline() { return useFirestoreCollection<any>("growthTimeline", [], mockData.growthTimeline); }
-export function useCareerRecommendation() { return useFirestoreDoc<any>("careerRecommendations", "default", mockData.careerRecommendation); }
+export function useTeammates() { return useFirestoreCollection<any>("teammates", [], []); }
+export function useDeadlines() { return useFirestoreCollection<any>("deadlines", [], []); }
+export function useActiveProjects() { return useFirestoreCollection<any>("activeProjects", [], []); }
+export function usePortfolioProjects() { return useFirestoreCollection<any>("portfolioProjects", [], []); }
+export function useExperienceTimeline() { return useFirestoreCollection<any>("experienceTimeline", [], []); }
+export function useSkillData() { return useFirestoreCollection<any>("skillData", [], []); }
+export function useSkillGapData() { return useFirestoreCollection<any>("skillGapData", [], []); }
+export function useGrowthTimeline() { return useFirestoreCollection<any>("growthTimeline", [], []); }
+export function useCareerRecommendation() { return useFirestoreDoc<any>("careerRecommendations", "default", null); }
 
 export function useAssignmentsByClassroom(classroomId?: string) {
   const [data, setData] = useState<ClassroomAssignment[]>([]);
@@ -242,6 +242,10 @@ export function useAssignmentsByClassroom(classroomId?: string) {
   }, [classroomId]);
 
   return { data, loading };
+}
+
+export function useAssignmentById(assignmentId?: string) {
+  return useFirestoreDoc<ClassroomAssignment>("assignments", assignmentId, null);
 }
 
 export function useSubmissionsByClassroom(classroomId?: string) {
@@ -346,9 +350,6 @@ export function useGroupMembers(classroomId?: string) {
 
 export async function createAssignment(input: Omit<ClassroomAssignment, "id" | "createdAt">) {
   const normalizedTargetIds = Array.from(new Set((input.targetIds || []).map((item) => String(item).trim()).filter(Boolean)));
-  if (input.targetType !== "classroom" && normalizedTargetIds.length === 0) {
-    throw new Error("targetIds is required for group/individual assignment");
-  }
 
   const created = await addDoc(collection(db, "assignments"), {
     ...input,
@@ -356,6 +357,16 @@ export async function createAssignment(input: Omit<ClassroomAssignment, "id" | "
     createdAt: serverTimestamp(),
   });
   return created.id;
+}
+
+export async function updateAssignmentTargetType(params: {
+  assignmentId: string;
+  targetType: "classroom" | "group" | "individual";
+}) {
+  await updateDoc(doc(db, "assignments", params.assignmentId), {
+    targetType: params.targetType,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export async function upsertSubmissionFeedback(submissionId: string, feedback: string, score: number) {
@@ -406,6 +417,14 @@ function scoreByRequiredSkills(skills: string[], requiredSkills: string[]) {
   }, 0);
 }
 
+function scoreByRequiredInterests(interests: string[], requiredInterests: string[]) {
+  if (requiredInterests.length === 0) return interests.length;
+  const normalized = new Set(interests.map((item) => item.toLowerCase()));
+  return requiredInterests.reduce((score, item) => {
+    return normalized.has(item.toLowerCase()) ? score + 1 : score;
+  }, 0);
+}
+
 function createGroupShells(totalStudents: number, membersPerGroup: number) {
   const groupCount = Math.max(1, Math.ceil(totalStudents / Math.max(1, membersPerGroup)));
   return Array.from({ length: groupCount }).map((_, idx) => ({
@@ -415,7 +434,17 @@ function createGroupShells(totalStudents: number, membersPerGroup: number) {
   }));
 }
 
-function buildBalancedGroups(students: any[], membersPerGroup: number, requiredSkills: string[]) {
+function buildRandomGroups(students: any[], membersPerGroup: number) {
+  const shuffled = [...students].sort(() => Math.random() - 0.5);
+  const groups = createGroupShells(shuffled.length, membersPerGroup);
+  shuffled.forEach((student, index) => {
+    const groupIndex = index % groups.length;
+    groups[groupIndex].members.push(student);
+  });
+  return groups;
+}
+
+function buildSkillGroups(students: any[], membersPerGroup: number, requiredSkills: string[]) {
   const ranked = [...students].sort((a, b) => {
     const scoreDiff = scoreByRequiredSkills(b.skills, requiredSkills) - scoreByRequiredSkills(a.skills, requiredSkills);
     if (scoreDiff !== 0) return scoreDiff;
@@ -441,11 +470,17 @@ function buildBalancedGroups(students: any[], membersPerGroup: number, requiredS
   return groups;
 }
 
-function buildComplementaryGroups(students: any[], membersPerGroup: number, requiredSkills: string[]) {
+function buildInterestGroups(students: any[], membersPerGroup: number, requiredInterests: string[]) {
   const groups = createGroupShells(students.length, membersPerGroup);
-  const required = requiredSkills.map((item) => item.toLowerCase());
+  const required = requiredInterests.map((item) => item.toLowerCase());
 
-  for (const student of students) {
+  const ranked = [...students].sort((a, b) => {
+    const scoreDiff = scoreByRequiredInterests(b.interests || [], requiredInterests) - scoreByRequiredInterests(a.interests || [], requiredInterests);
+    if (scoreDiff !== 0) return scoreDiff;
+    return (b.interests || []).length - (a.interests || []).length;
+  });
+
+  for (const student of ranked) {
     let bestIndex = 0;
     let bestScore = Number.NEGATIVE_INFINITY;
 
@@ -453,10 +488,10 @@ function buildComplementaryGroups(students: any[], membersPerGroup: number, requ
       const hasCapacity = group.members.length < membersPerGroup;
       if (!hasCapacity) return;
 
-      const studentSkillSet = new Set((student.skills || []).map((skill: string) => skill.toLowerCase()));
+      const studentInterestSet = new Set((student.interests || []).map((item: string) => item.toLowerCase()));
       let missingCoverageGain = 0;
       for (const req of required) {
-        if (studentSkillSet.has(req) && !group.requiredCoverage.has(req)) {
+        if (studentInterestSet.has(req) && !group.requiredCoverage.has(req)) {
           missingCoverageGain += 2;
         }
       }
@@ -470,7 +505,7 @@ function buildComplementaryGroups(students: any[], membersPerGroup: number, requ
     });
 
     groups[bestIndex].members.push(student);
-    (student.skills || []).forEach((skill: string) => groups[bestIndex].requiredCoverage.add(skill.toLowerCase()));
+    (student.interests || []).forEach((item: string) => groups[bestIndex].requiredCoverage.add(item.toLowerCase()));
   }
 
   return groups;
@@ -497,6 +532,7 @@ export async function generateClassroomGroups(params: {
   mode: GroupingMode;
   membersPerGroup: number;
   requiredSkills: string[];
+  aiSuggestedGroups?: Array<{ name: string; memberUids: string[]; reason?: string }>;
 }) {
   const students = await getClassroomStudentProfiles(params.classroomId);
   if (students.length === 0) {
@@ -505,9 +541,27 @@ export async function generateClassroomGroups(params: {
 
   await clearExistingGroups(params.classroomId);
 
-  const groups = params.mode === "balanced"
-    ? buildBalancedGroups(students, params.membersPerGroup, params.requiredSkills)
-    : buildComplementaryGroups(students, params.membersPerGroup, params.requiredSkills);
+  let groups = [] as Array<{ name: string; members: any[]; requiredCoverage: Set<string>; aiReason?: string }>;
+  if (params.aiSuggestedGroups && params.aiSuggestedGroups.length > 0) {
+    const byUid = new Map(students.map((student) => [student.uid, student]));
+    groups = params.aiSuggestedGroups.map((group, index) => {
+      const members = (group.memberUids || [])
+        .map((uid) => byUid.get(uid))
+        .filter(Boolean) as any[];
+      return {
+        name: group.name || `A${index + 1}`,
+        members,
+        requiredCoverage: new Set<string>(),
+        aiReason: group.reason,
+      };
+    }).filter((group) => group.members.length > 0);
+  } else if (params.mode === "random") {
+    groups = buildRandomGroups(students, params.membersPerGroup);
+  } else if (params.mode === "skill") {
+    groups = buildSkillGroups(students, params.membersPerGroup, params.requiredSkills);
+  } else {
+    groups = buildInterestGroups(students, params.membersPerGroup, params.requiredSkills);
+  }
 
   const classroomRef = doc(db, "teacherActivities", params.classroomId);
   const records: Array<{ ref: ReturnType<typeof doc>; payload: Record<string, unknown> }> = [];
@@ -525,6 +579,7 @@ export async function generateClassroomGroups(params: {
         mode: params.mode,
         membersPerGroup: params.membersPerGroup,
         requiredSkills: params.requiredSkills,
+        aiReason: group.aiReason || "จัดกลุ่มตามความสมดุลของทักษะและความเหมาะสม",
         createdByUid: params.teacherUid,
         createdAt: serverTimestamp(),
       },
@@ -617,6 +672,9 @@ export function calculateClassroomProgress(args: {
       return new Set(Array.from(enrolledUids).map((uid) => `student::${uid}`));
     }
     if (assignment.targetType === "individual") {
+      if (!assignment.targetIds || assignment.targetIds.length === 0) {
+        return new Set(Array.from(enrolledUids).map((uid) => `student::${uid}`));
+      }
       const target = new Set<string>();
       (assignment.targetIds || []).forEach((uid) => {
         if (enrollmentUidSet.has(uid)) target.add(`student::${uid}`);
@@ -624,6 +682,9 @@ export function calculateClassroomProgress(args: {
       return target;
     }
 
+    if (!assignment.targetIds || assignment.targetIds.length === 0) {
+      return new Set(Array.from(studentsByGroupId.keys()).map((groupId) => `group::${groupId}`));
+    }
     const targetGroupIds = new Set(assignment.targetIds || []);
     const target = new Set<string>();
     targetGroupIds.forEach((groupId) => {

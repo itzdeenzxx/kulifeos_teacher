@@ -1,5 +1,5 @@
-﻿import { Fragment, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+﻿import { Fragment, useEffect, useMemo, useState } from "react";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import { PageTransition } from "@/components/MotionWrappers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +30,7 @@ import {
   createAssignment,
   generateClassroomGroups,
   inviteStudentsByUid,
+  updateAssignmentTargetType,
   upsertSubmissionFeedback,
   useAssignmentsByClassroom,
   useClassroomEnrollments,
@@ -42,17 +43,25 @@ import {
 import { ClassroomQRDialog } from "@/components/teacher/ClassroomQRDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { db } from "@/lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
+import { generateAIGroupsWithTogether } from "@/lib/aiAnalyze";
 
 const groupingModeOptions: { value: GroupingMode; label: string; description: string }[] = [
   {
-    value: "balanced",
-    label: "Balanced",
-    description: "Distribute high-skill members evenly across groups.",
+    value: "random",
+    label: "สุ่ม",
+    description: "กระจายนิสิตแบบสุ่มเพื่อเริ่มจัดทีมอย่างรวดเร็ว",
   },
   {
-    value: "complementary",
-    label: "Complementary",
-    description: "Maximize skill coverage by filling missing strengths per group.",
+    value: "skill",
+    label: "ตามความสามารถ",
+    description: "กระจายนิสิตที่มีทักษะสูงให้สมดุลในแต่ละกลุ่ม",
+  },
+  {
+    value: "interest",
+    label: "ตามความถนัด",
+    description: "จัดทีมให้ทักษะและความสนใจครอบคลุมกันในแต่ละกลุ่ม",
   },
 ];
 
@@ -69,6 +78,7 @@ function formatDateLabel(value?: string) {
 
 const ClassroomDetail = () => {
   const { classroomId } = useParams();
+  const [, setSearchParams] = useSearchParams();
   const { authUser } = useAuth();
   const { toast } = useToast();
 
@@ -94,14 +104,31 @@ const ClassroomDetail = () => {
     title: "",
     description: "",
     dueDate: "",
-    targetType: "classroom" as "classroom" | "group" | "individual",
     allowTextLink: true,
     allowFileUpload: true,
   });
-  const [assignmentTargetIds, setAssignmentTargetIds] = useState<string[]>([]);
 
-  const [groupingMode, setGroupingMode] = useState<GroupingMode>("balanced");
+  const [groupingMode, setGroupingMode] = useState<GroupingMode>("skill");
   const [groupingLoading, setGroupingLoading] = useState(false);
+  const [classroomSetupOpen, setClassroomSetupOpen] = useState(false);
+  const [savingClassroomSetup, setSavingClassroomSetup] = useState(false);
+  const [membersPerGroupInput, setMembersPerGroupInput] = useState("4");
+  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [requiredSkillsInput, setRequiredSkillsInput] = useState("");
+
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [wizardSubmitting, setWizardSubmitting] = useState(false);
+  const [wizardForm, setWizardForm] = useState({
+    workMode: "individual" as "individual" | "group",
+    assignmentTitle: "",
+    assignmentDescription: "",
+    dueDate: "",
+    groupingMode: "skill" as GroupingMode,
+    membersPerGroup: "4",
+    requiredSkills: [] as string[],
+  });
+  const [wizardSkillInput, setWizardSkillInput] = useState("");
 
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string>("");
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -258,22 +285,11 @@ const ClassroomDetail = () => {
     return map;
   }, [groupMembers]);
 
-  const groupTargetOptions = useMemo(() => {
-    return groups.map((group) => ({
-      id: group.id,
-      label: group.name,
-    }));
-  }, [groups]);
-
-  const individualTargetOptions = useMemo(() => {
-    return enrollments.map((enrollment) => {
-      const member = groupMembers.find((item) => item.studentUid === enrollment.studentUid);
-      return {
-        id: enrollment.studentUid,
-        label: member?.studentName || enrollment.studentUid,
-      };
-    });
-  }, [enrollments, groupMembers]);
+  useEffect(() => {
+    if (!classroom) return;
+    setMembersPerGroupInput(String(classroom.membersPerGroup || 4));
+    setRequiredSkills(Array.isArray(classroom.requirements) ? classroom.requirements : []);
+  }, [classroom]);
 
   if (!classroom) {
     return (
@@ -328,11 +344,6 @@ const ClassroomDetail = () => {
       toast({ title: "Incomplete Form", description: "Please provide assignment title and due date.", variant: "destructive" });
       return;
     }
-    if (assignmentForm.targetType !== "classroom" && assignmentTargetIds.length === 0) {
-      toast({ title: "No Target Selected", description: "Please select at least one target.", variant: "destructive" });
-      return;
-    }
-
     setAssignmentSubmitting(true);
     try {
       await createAssignment({
@@ -340,8 +351,8 @@ const ClassroomDetail = () => {
         title: assignmentForm.title,
         description: assignmentForm.description,
         dueDate: assignmentForm.dueDate,
-        targetType: assignmentForm.targetType,
-        targetIds: assignmentForm.targetType === "classroom" ? [] : assignmentTargetIds,
+        targetType: "classroom",
+        targetIds: [],
         allowTextLink: assignmentForm.allowTextLink,
         allowFileUpload: assignmentForm.allowFileUpload,
         createdByUid: authUser.uid,
@@ -351,11 +362,9 @@ const ClassroomDetail = () => {
         title: "",
         description: "",
         dueDate: "",
-        targetType: "classroom",
         allowTextLink: true,
         allowFileUpload: true,
       });
-      setAssignmentTargetIds([]);
       setAssignmentOpen(false);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Unable to create assignment.";
@@ -365,26 +374,62 @@ const ClassroomDetail = () => {
     }
   };
 
-  const toggleAssignmentTarget = (targetId: string) => {
-    setAssignmentTargetIds((prev) => {
-      if (prev.includes(targetId)) {
-        return prev.filter((item) => item !== targetId);
-      }
-      return [...prev, targetId];
-    });
+  const handleUpdateAssignmentType = async (assignmentId: string, targetType: "classroom" | "group" | "individual") => {
+    try {
+      await updateAssignmentTargetType({ assignmentId, targetType });
+      toast({ title: "อัปเดตประเภทงานแล้ว" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "อัปเดตไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
+    }
   };
 
   const handleGenerateGroups = async () => {
     if (!authUser?.uid || !classroomId) return;
 
+    const hasGroupAssignment = assignments.some((item) => item.targetType === "group");
+    const classroomConfiguredForGroup = classroom.defaultWorkMode === "group";
+    if (!hasGroupAssignment && !classroomConfiguredForGroup) {
+      toast({
+        title: "ยังไม่มีงานกลุ่ม",
+        description: "กรุณาสร้างงานและเลือกประเภทเป็นงานกลุ่มก่อน แล้วจึงจัดกลุ่มนิสิต",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (enrollments.length === 0) {
+      toast({
+        title: "ยังไม่มีนิสิตในห้อง",
+        description: "เพิ่มนิสิตเข้าห้องเรียนก่อนเริ่มจัดกลุ่ม",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setGroupingLoading(true);
     try {
+      const aiResult = await generateAIGroupsWithTogether({
+        groupSize: Number(classroom.membersPerGroup || 4),
+        requiredSkills: classroom.requirements || [],
+        students: enrollments.map((enrollment) => {
+          const member = groupMembers.find((item) => item.studentUid === enrollment.studentUid);
+          return {
+            uid: enrollment.studentUid,
+            name: member?.studentName || enrollment.studentUid,
+            skills: member?.skills || [],
+            interests: member?.interests || [],
+          };
+        }),
+      });
+
       const result = await generateClassroomGroups({
         classroomId,
         teacherUid: authUser.uid,
         mode: groupingMode,
         membersPerGroup: Number(classroom.membersPerGroup || 4),
         requiredSkills: classroom.requirements || [],
+        aiSuggestedGroups: aiResult?.groups,
       });
       toast({
         title: "Groups Generated",
@@ -395,6 +440,133 @@ const ClassroomDetail = () => {
       toast({ title: "Grouping Failed", description: message, variant: "destructive" });
     } finally {
       setGroupingLoading(false);
+    }
+  };
+
+  const toggleRequiredSkill = (value: string) => {
+    setRequiredSkills((prev) => prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]);
+  };
+
+  const addRequiredSkill = () => {
+    const value = requiredSkillsInput.trim();
+    if (!value) return;
+    if (!requiredSkills.includes(value)) {
+      setRequiredSkills((prev) => [...prev, value]);
+    }
+    setRequiredSkillsInput("");
+  };
+
+  const toggleWizardSkill = (value: string) => {
+    setWizardForm((prev) => ({
+      ...prev,
+      requiredSkills: prev.requiredSkills.includes(value)
+        ? prev.requiredSkills.filter((item) => item !== value)
+        : [...prev.requiredSkills, value],
+    }));
+  };
+
+  const addWizardSkill = () => {
+    const value = wizardSkillInput.trim();
+    if (!value) return;
+    setWizardForm((prev) => ({
+      ...prev,
+      requiredSkills: prev.requiredSkills.includes(value) ? prev.requiredSkills : [...prev.requiredSkills, value],
+    }));
+    setWizardSkillInput("");
+  };
+
+  const saveClassroomSetup = async () => {
+    if (!classroomId) return;
+    const numericMembers = Math.max(2, Number(membersPerGroupInput) || 4);
+
+    setSavingClassroomSetup(true);
+    try {
+      await updateDoc(doc(db, "teacherActivities", classroomId), {
+        membersPerGroup: numericMembers,
+        requirements: requiredSkills,
+        updatedAt: Date.now(),
+      });
+      toast({ title: "บันทึกการตั้งค่าห้องเรียนแล้ว" });
+      setClassroomSetupOpen(false);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "บันทึกไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
+    } finally {
+      setSavingClassroomSetup(false);
+    }
+  };
+
+  const closeWizard = () => {
+    setWizardOpen(false);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("setup");
+      return next;
+    }, { replace: true });
+  };
+
+  const finishWizard = async () => {
+    if (!authUser?.uid || !classroomId) return;
+    if (!wizardForm.assignmentTitle.trim() || !wizardForm.dueDate) {
+      toast({ title: "ข้อมูลไม่ครบ", description: "กรุณาระบุชื่องานและวันครบกำหนด", variant: "destructive" });
+      return;
+    }
+
+    setWizardSubmitting(true);
+    try {
+      const numericMembers = Math.max(2, Number(wizardForm.membersPerGroup) || 4);
+      await updateDoc(doc(db, "teacherActivities", classroomId), {
+        membersPerGroup: numericMembers,
+        requirements: wizardForm.requiredSkills,
+        defaultWorkMode: wizardForm.workMode,
+        updatedAt: Date.now(),
+      });
+
+      await createAssignment({
+        classroomId,
+        title: wizardForm.assignmentTitle,
+        description: wizardForm.assignmentDescription || (wizardForm.workMode === "group" ? "งานกลุ่ม" : "งานเดี่ยว"),
+        dueDate: wizardForm.dueDate,
+        targetType: "classroom",
+        targetIds: [],
+        allowTextLink: true,
+        allowFileUpload: true,
+        createdByUid: authUser.uid,
+      });
+
+      if (wizardForm.workMode === "group" && enrollments.length > 0) {
+        const aiResult = await generateAIGroupsWithTogether({
+          groupSize: numericMembers,
+          requiredSkills: wizardForm.requiredSkills,
+          students: enrollments.map((enrollment) => {
+            const member = groupMembers.find((item) => item.studentUid === enrollment.studentUid);
+            return {
+              uid: enrollment.studentUid,
+              name: member?.studentName || enrollment.studentUid,
+              skills: member?.skills || [],
+              interests: member?.interests || [],
+            };
+          }),
+        });
+
+        await generateClassroomGroups({
+          classroomId,
+          teacherUid: authUser.uid,
+          mode: wizardForm.groupingMode,
+          membersPerGroup: numericMembers,
+          requiredSkills: wizardForm.requiredSkills,
+          aiSuggestedGroups: aiResult?.groups,
+        });
+      }
+
+      toast({ title: "Setup สำเร็จ", description: "ตั้งค่างานและการจัดกลุ่มเรียบร้อยแล้ว" });
+      setActiveTab(wizardForm.workMode === "group" ? "groups" : "classwork");
+      closeWizard();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "ตั้งค่าไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
+    } finally {
+      setWizardSubmitting(false);
     }
   };
 
@@ -450,6 +622,11 @@ const ClassroomDetail = () => {
                 <h1 className="text-2xl md:text-4xl font-bold">{classroom.name}</h1>
                 <p className="mt-2 text-primary-foreground/85">Class code: {classCode}</p>
                 <p className="text-primary-foreground/85">Students {enrollments.length} • Groups {groups.length}</p>
+                <div className="mt-3 flex gap-2 text-sm">
+                  <span className="rounded-full bg-white px-3 py-1 font-medium text-primary">Stream</span>
+                  <Link to={`/classroom/${classroomId}/work`} className="rounded-full bg-white/15 px-3 py-1">Work</Link>
+                  <Link to={`/classroom/${classroomId}/people`} className="rounded-full bg-white/15 px-3 py-1">People</Link>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button variant="secondary" className="rounded-xl" onClick={() => setQrOpen(true)}>
@@ -458,8 +635,16 @@ const ClassroomDetail = () => {
                 <Button variant="secondary" className="rounded-xl" onClick={() => setUidInviteOpen(true)}>
                   <UserPlus className="h-4 w-4 mr-1" /> Add by UID
                 </Button>
+                <Button variant="secondary" className="rounded-xl" onClick={() => setWizardOpen(true)}>
+                  Setup Wizard
+                </Button>
               </div>
             </div>
+            {classroom.teacherVerificationStatus === "unverified-non-ku" && (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                บัญชีอาจารย์ยังไม่ยืนยันตัวตน ระบบจะแสดงสถานะนี้ให้นิสิตทราบเพื่อความปลอดภัย
+              </div>
+            )}
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -550,14 +735,27 @@ const ClassroomDetail = () => {
                       <div key={assignment.id} className="rounded-xl border border-border/50 p-3">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div>
+                            <div className="mb-2 w-[180px]">
+                              <Select
+                                value={assignment.targetType}
+                                onValueChange={(value: "classroom" | "group" | "individual") => handleUpdateAssignmentType(assignment.id, value)}
+                              >
+                                <SelectTrigger className="h-8 rounded-lg">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="classroom">ทั้งห้อง</SelectItem>
+                                  <SelectItem value="individual">งานเดี่ยว</SelectItem>
+                                  <SelectItem value="group">งานกลุ่ม</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                             <p className="text-sm font-semibold">{assignment.title}</p>
                             <p className="text-xs text-muted-foreground mt-1">{assignment.description || "-"}</p>
                             <p className="text-xs text-muted-foreground mt-1 inline-flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5" /> Due {formatDateLabel(assignment.dueDate)}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Target: {assignment.targetType === "classroom" ? "Whole class" : `${assignment.targetType} (${assignment.targetIds?.length || 0})`}
-                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">ประเภทงาน: {assignment.targetType}</p>
                           </div>
                           <div className="text-right">
                             <Badge variant={isOverdue ? "destructive" : "secondary"} className="mb-2 border-0">
@@ -644,6 +842,9 @@ const ClassroomDetail = () => {
                 <CardHeader className="flex-row items-center justify-between">
                   <CardTitle className="text-base inline-flex items-center gap-2"><Brain className="h-4 w-4" /> Grouping Engine</CardTitle>
                   <div className="flex items-center gap-2">
+                    <Button variant="outline" className="rounded-xl" onClick={() => setClassroomSetupOpen(true)}>
+                      ตั้งค่า Members/Skills
+                    </Button>
                     <Select value={groupingMode} onValueChange={(value: GroupingMode) => setGroupingMode(value)}>
                       <SelectTrigger className="w-48 rounded-xl h-9">
                         <SelectValue />
@@ -664,7 +865,10 @@ const ClassroomDetail = () => {
                     {groupingModeOptions.find((item) => item.value === groupingMode)?.description}
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Target skills: {(classroom.requirements || []).join(", ") || "-"}
+                    Target skills: {(classroom.requirements || []).join(", ") || "ยังไม่ได้ตั้งค่า"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Members per group: {classroom.membersPerGroup || 4}
                   </p>
                 </CardContent>
               </Card>
@@ -772,11 +976,206 @@ const ClassroomDetail = () => {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={classroomSetupOpen} onOpenChange={setClassroomSetupOpen}>
+        <DialogContent className="rounded-2xl sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>ตั้งค่าห้องเรียน</DialogTitle>
+            <DialogDescription>กำหนดจำนวนคนต่อกลุ่มและทักษะเป้าหมายสำหรับการจัดกลุ่ม</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>จำนวนสมาชิกต่อกลุ่ม</Label>
+              <Input
+                type="number"
+                min={2}
+                max={10}
+                value={membersPerGroupInput}
+                onChange={(e) => setMembersPerGroupInput(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>ทักษะเป้าหมาย</Label>
+              <div className="flex flex-wrap gap-2">
+                {requiredSkills.map((skill) => (
+                  <button
+                    key={skill}
+                    type="button"
+                    onClick={() => toggleRequiredSkill(skill)}
+                    className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm text-primary"
+                  >
+                    {skill} x
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={requiredSkillsInput}
+                  onChange={(e) => setRequiredSkillsInput(e.target.value)}
+                  placeholder="เช่น Backend Node.js"
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addRequiredSkill())}
+                />
+                <Button type="button" variant="outline" onClick={addRequiredSkill}>เพิ่ม</Button>
+              </div>
+            </div>
+            <Button className="w-full rounded-xl" onClick={saveClassroomSetup} disabled={savingClassroomSetup}>
+              {savingClassroomSetup ? "กำลังบันทึก..." : "บันทึกการตั้งค่า"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={wizardOpen} onOpenChange={(open) => !open && closeWizard()}>
+        <DialogContent className="rounded-2xl sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Setup Wizard</DialogTitle>
+            <DialogDescription>ตั้งค่าห้องเรียน 3 ขั้นตอนก่อนเริ่มใช้งานจริง</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3].map((step) => (
+                <div key={step} className={`rounded-lg px-3 py-2 text-center text-sm ${wizardStep === step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                  Step {step}
+                </div>
+              ))}
+            </div>
+
+            {wizardStep === 1 && (
+              <div className="space-y-3">
+                <Label>Step 1: ประเภทงาน</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={wizardForm.workMode === "individual" ? "default" : "outline"}
+                    className="rounded-xl"
+                    onClick={() => setWizardForm((prev) => ({ ...prev, workMode: "individual" }))}
+                  >
+                    งานเดี่ยว
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={wizardForm.workMode === "group" ? "default" : "outline"}
+                    className="rounded-xl"
+                    onClick={() => setWizardForm((prev) => ({ ...prev, workMode: "group" }))}
+                  >
+                    งานกลุ่ม
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <Label>ชื่องานแรกของคลาส</Label>
+                  <Input
+                    value={wizardForm.assignmentTitle}
+                    onChange={(e) => setWizardForm((prev) => ({ ...prev, assignmentTitle: e.target.value }))}
+                    placeholder="เช่น Assignment 1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>รายละเอียดงาน</Label>
+                  <Textarea
+                    value={wizardForm.assignmentDescription}
+                    onChange={(e) => setWizardForm((prev) => ({ ...prev, assignmentDescription: e.target.value }))}
+                    placeholder="คำอธิบายงานโดยย่อ"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>กำหนดส่ง</Label>
+                  <Input
+                    type="date"
+                    value={wizardForm.dueDate}
+                    onChange={(e) => setWizardForm((prev) => ({ ...prev, dueDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+            )}
+
+            {wizardStep === 2 && (
+              <div className="space-y-3">
+                <Label>Step 2: วิธีจัดกลุ่ม</Label>
+                <Select
+                  value={wizardForm.groupingMode}
+                  onValueChange={(value: GroupingMode) => setWizardForm((prev) => ({ ...prev, groupingMode: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groupingModeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="space-y-2">
+                  <Label>จำนวนสมาชิกต่อกลุ่ม</Label>
+                  <Input
+                    type="number"
+                    min={2}
+                    max={10}
+                    value={wizardForm.membersPerGroup}
+                    onChange={(e) => setWizardForm((prev) => ({ ...prev, membersPerGroup: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>ทักษะเป้าหมาย</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {wizardForm.requiredSkills.map((skill) => (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => toggleWizardSkill(skill)}
+                        className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm text-primary"
+                      >
+                        {skill} x
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      value={wizardSkillInput}
+                      onChange={(e) => setWizardSkillInput(e.target.value)}
+                      placeholder="เช่น Frontend React"
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addWizardSkill())}
+                    />
+                    <Button type="button" variant="outline" onClick={addWizardSkill}>เพิ่ม</Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {wizardStep === 3 && (
+              <div className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4 text-sm">
+                <Label>Step 3: Preview</Label>
+                <p><span className="font-medium">ประเภทงาน:</span> {wizardForm.workMode === "group" ? "งานกลุ่ม" : "งานเดี่ยว"}</p>
+                <p><span className="font-medium">ชื่องาน:</span> {wizardForm.assignmentTitle || "-"}</p>
+                <p><span className="font-medium">กำหนดส่ง:</span> {wizardForm.dueDate || "-"}</p>
+                <p><span className="font-medium">วิธีจัดกลุ่ม:</span> {groupingModeOptions.find((item) => item.value === wizardForm.groupingMode)?.label}</p>
+                <p><span className="font-medium">สมาชิกต่อกลุ่ม:</span> {wizardForm.membersPerGroup}</p>
+                <p><span className="font-medium">ทักษะเป้าหมาย:</span> {wizardForm.requiredSkills.join(", ") || "-"}</p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2">
+              <Button type="button" variant="outline" className="rounded-xl" onClick={() => setWizardStep((prev) => Math.max(1, prev - 1))} disabled={wizardStep === 1 || wizardSubmitting}>
+                ย้อนกลับ
+              </Button>
+              {wizardStep < 3 ? (
+                <Button type="button" className="rounded-xl" onClick={() => setWizardStep((prev) => Math.min(3, prev + 1))}>
+                  ถัดไป
+                </Button>
+              ) : (
+                <Button type="button" className="rounded-xl" onClick={finishWizard} disabled={wizardSubmitting}>
+                  {wizardSubmitting ? "กำลังบันทึก..." : "ยืนยันและเริ่มใช้งาน"}
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={assignmentOpen} onOpenChange={setAssignmentOpen}>
         <DialogContent className="rounded-2xl sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Create Assignment</DialogTitle>
-            <DialogDescription>Supports text/link/file submissions.</DialogDescription>
+            <DialogDescription>สร้างงานเดี่ยวหรืองานกลุ่ม และเปิดรับข้อความ/ลิงก์/ไฟล์ได้</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div className="space-y-1.5">
@@ -795,61 +1194,14 @@ const ClassroomDetail = () => {
                 placeholder="Assignment brief / rubric"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Due Date</Label>
-                <Input
-                  type="date"
-                  value={assignmentForm.dueDate}
-                  onChange={(e) => setAssignmentForm((prev) => ({ ...prev, dueDate: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Target Type</Label>
-                <Select
-                  value={assignmentForm.targetType}
-                  onValueChange={(value: "classroom" | "group" | "individual") => {
-                    setAssignmentForm((prev) => ({ ...prev, targetType: value }));
-                    setAssignmentTargetIds([]);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="classroom">Whole Class</SelectItem>
-                    <SelectItem value="group">Group</SelectItem>
-                    <SelectItem value="individual">Individual</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-1.5">
+              <Label>Due Date</Label>
+              <Input
+                type="date"
+                value={assignmentForm.dueDate}
+                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, dueDate: e.target.value }))}
+              />
             </div>
-            {assignmentForm.targetType !== "classroom" && (
-              <div className="space-y-2">
-                <Label>
-                  {assignmentForm.targetType === "group" ? "Select target groups" : "Select target students"}
-                </Label>
-                <div className="max-h-36 overflow-auto rounded-xl border border-border/50 p-2 space-y-2">
-                  {(assignmentForm.targetType === "group" ? groupTargetOptions : individualTargetOptions).map((option) => {
-                    const selected = assignmentTargetIds.includes(option.id);
-                    return (
-                      <button
-                        type="button"
-                        key={option.id}
-                        onClick={() => toggleAssignmentTarget(option.id)}
-                        className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors ${selected ? "border-primary bg-primary/10 text-primary" : "border-border/50 hover:bg-muted/40"}`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                  {(assignmentForm.targetType === "group" ? groupTargetOptions : individualTargetOptions).length === 0 && (
-                    <p className="text-xs text-muted-foreground p-2">No available targets.</p>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">Selected: {assignmentTargetIds.length}</p>
-              </div>
-            )}
             <div className="flex gap-2">
               <Button
                 type="button"

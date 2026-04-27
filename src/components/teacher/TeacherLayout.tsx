@@ -1,11 +1,14 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Settings, LogOut, GraduationCap, Menu, X } from "lucide-react";
+import { LayoutDashboard, Settings, LogOut, GraduationCap } from "lucide-react";
 import { motion } from "framer-motion";
 import { NavLink } from "@/components/NavLink";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useMemo } from "react";
+import { useLogout } from "@/hooks/use-logout";
+import { LogoutDialog } from "@/components/LogoutDialog";
+import { useCurrentUserProfile } from "@/lib/db";
 
 const teacherNav = [
   { title: "Classrooms", url: "/", icon: LayoutDashboard },
@@ -17,8 +20,35 @@ interface TeacherLayoutProps {
 }
 
 export function TeacherLayout({ children }: TeacherLayoutProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { open, promptLogout, confirmLogout, cancel } = useLogout();
+  const { profile } = useCurrentUserProfile();
+
+  const teacherName = useMemo(() => {
+    const onboarding = profile?.onboardingData || {};
+    const fullName = onboarding.fullName || profile?.fullName || "อาจารย์";
+    const title = onboarding.title || "";
+    return `${title} ${fullName}`.trim();
+  }, [profile]);
+
+  const avatarText = useMemo(() => {
+    const trimmed = (teacherName || "อจ").trim();
+    if (!trimmed) return "อจ";
+    return trimmed.slice(0, 2);
+  }, [teacherName]);
+
+  const verificationLabel = useMemo(() => {
+    if (profile?.verificationStatus === "trusted-ku") return "ยืนยันโดยโดเมน @ku.th";
+    if (profile?.verificationStatus === "verified-non-ku") return "ยืนยันตัวตนแล้ว";
+    return "ยังไม่ยืนยันตัวตน";
+  }, [profile?.verificationStatus]);
+
+  const verificationTone = useMemo(() => {
+    if (profile?.verificationStatus === "trusted-ku" || profile?.verificationStatus === "verified-non-ku") {
+      return "bg-primary/10 text-primary";
+    }
+    return "bg-amber-100 text-amber-800";
+  }, [profile?.verificationStatus]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,14 +80,17 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link to="/select-role">
-            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
-              <LogOut className="h-4 w-4" />
-              <span>ออกจากระบบ</span>
-            </Button>
-          </Link>
+          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground" onClick={promptLogout}>
+            <LogOut className="h-4 w-4" />
+            <span>ออกจากระบบ</span>
+          </Button>
+          <span className="text-sm text-muted-foreground max-w-[240px] truncate">{teacherName}</span>
+          <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${verificationTone}`}>
+            {verificationLabel}
+          </span>
           <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">อจ</AvatarFallback>
+            {profile?.photoURL && <AvatarImage src={profile.photoURL} alt={teacherName} />}
+            <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">{avatarText}</AvatarFallback>
           </Avatar>
         </div>
       </header>
@@ -71,16 +104,21 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
           <span className="text-[18px] font-bold text-foreground">KU Classroom</span>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/select-role">
-            <button className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-foreground">
-              <LogOut className="h-4 w-4" />
-            </button>
-          </Link>
+          <button className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-foreground" onClick={promptLogout}>
+            <LogOut className="h-4 w-4" />
+          </button>
           <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">อจ</AvatarFallback>
+            {profile?.photoURL && <AvatarImage src={profile.photoURL} alt={teacherName} />}
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">{avatarText}</AvatarFallback>
           </Avatar>
         </div>
       </header>
+
+      {profile?.verificationStatus === "unverified-non-ku" && (
+        <div className="mx-4 mt-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 md:mx-8">
+          บัญชีอาจารย์ยังไม่ยืนยันตัวตน นิสิตจะเห็นสถานะนี้เพื่อความปลอดภัย
+        </div>
+      )}
 
       {/* ===== MOBILE Bottom Nav ===== */}
       <nav
@@ -130,6 +168,8 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
           {children}
         </motion.div>
       </main>
+
+      <LogoutDialog open={open} onConfirm={confirmLogout} onCancel={cancel} />
     </div>
   );
 }

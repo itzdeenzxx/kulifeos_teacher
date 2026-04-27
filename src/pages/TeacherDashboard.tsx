@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrappers";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Users, CheckCircle, Clock, QrCode, MoreVertical, Sparkles, ChevronRight, X } from "lucide-react";
 import { useTeacherActivities } from "@/lib/db";
 import { db } from "@/lib/firebase";
@@ -36,7 +35,8 @@ const bannerColors = [
 ];
 
 const TeacherDashboard = () => {
-  const { authUser } = useAuth();
+  const navigate = useNavigate();
+  const { authUser, userProfile } = useAuth();
   const { toast } = useToast();
   const { data: teacherActivities = [] } = useTeacherActivities();
   const [qrActivity, setQrActivity] = useState<{
@@ -52,18 +52,11 @@ const TeacherDashboard = () => {
   const [editId, setEditId] = useState<string | number | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [membersPerGroup, setMembersPerGroup] = useState("4");
-  const [requirements, setRequirements] = useState<string[]>([]);
-  const toggleRequirement = (skill: string) => {
-    setRequirements(prev => prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]);
-  };
 
   const openCreateDialog = () => {
     setEditId(null);
     setName("");
     setDescription("");
-    setMembersPerGroup("4");
-    setRequirements([]);
     setCreateOpen(true);
   };
 
@@ -71,8 +64,6 @@ const TeacherDashboard = () => {
     setEditId(activity.id);
     setName(activity.name || "");
     setDescription(activity.description || "");
-    setMembersPerGroup(String(activity.membersPerGroup || 4));
-    setRequirements(activity.requirements || []);
     setCreateOpen(true);
   };
 
@@ -87,10 +78,10 @@ const TeacherDashboard = () => {
   };
 
   const handleCreateOrEditClassroom = async () => {
-    if (!name || !description || requirements.length === 0) {
+    if (!name.trim() || !description.trim()) {
       toast({
         title: "ข้อมูลไม่ครบ",
-        description: "กรุณากรอกชื่อวิชา คำอธิบาย และเลือกทักษะที่ต้องการอย่างน้อย 1 อย่าง",
+        description: "กรุณากรอกชื่อวิชาและคำอธิบาย",
         variant: "destructive"
       });
       return;
@@ -103,8 +94,6 @@ const TeacherDashboard = () => {
         await updateDoc(doc(db, "teacherActivities", String(editId)), {
           name,
           description,
-          membersPerGroup: parseInt(membersPerGroup, 10),
-          requirements,
           updatedAt: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
         });
         toast({ title: "อัปเดต Classroom สำเร็จ 🎉", description: "ข้อมูลห้องเรียนถูกแก้ไขแล้ว" });
@@ -112,10 +101,11 @@ const TeacherDashboard = () => {
         // Create mode
         const createdDoc = await addDoc(collection(db, "teacherActivities"), {
           ownerId: authUser?.uid || "unknown",
+          teacherVerificationStatus: userProfile?.verificationStatus || "unverified-non-ku",
           name,
           description,
-          membersPerGroup: parseInt(membersPerGroup, 10),
-          requirements,
+          membersPerGroup: 4,
+          requirements: [],
           students: 0,
           groups: 0,
           status: "waiting",
@@ -128,7 +118,8 @@ const TeacherDashboard = () => {
           joinPath: `/join/${createdDoc.id}`,
           updatedAt: Date.now(),
         });
-        toast({ title: "สร้าง Classroom สำเร็จ 🎉", description: "คุณสามารถเริ่มเพิ่มนิสิตเข้าห้องเรียนได้เลย" });
+        toast({ title: "สร้าง Classroom สำเร็จ 🎉", description: "เข้าสู่ห้องเรียนได้ทันที แล้วค่อยเพิ่มงานภายหลัง" });
+        navigate(`/classroom/${createdDoc.id}`);
       }
       
       setCreateOpen(false);
@@ -173,40 +164,12 @@ const TeacherDashboard = () => {
                     className="rounded-xl border-border/50" 
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>จำนวนคนต่อกลุ่ม</Label>
-                  <Select value={membersPerGroup} onValueChange={setMembersPerGroup}>
-                    <SelectTrigger className="rounded-xl border-border/50"><SelectValue placeholder="เลือก" /></SelectTrigger>
-                    <SelectContent>
-                      {[3, 4, 5, 6].map((n) => (
-                        <SelectItem key={n} value={String(n)}>{n} คน</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>ทักษะที่ต้องการ</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {["Tech", "Finance", "Marketing", "Design", "Data", "Leadership"].map((skill) => {
-                      const isSelected = requirements.includes(skill);
-                      return (
-                        <Badge 
-                          key={skill} 
-                          onClick={() => toggleRequirement(skill)}
-                          className={`cursor-pointer rounded-full border-0 px-3 py-1 text-xs transition-colors ${isSelected ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground hover:bg-primary/20"}`}
-                        >
-                          {skill}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                </div>
                 <Button 
                   disabled={isSubmitting}
                   className="w-full gap-2 rounded-xl bg-primary text-primary-foreground" 
                   onClick={handleCreateOrEditClassroom}
                 >
-                  <Sparkles className="h-4 w-4" /> {isSubmitting ? "กำลังบันทึก..." : editId ? "บันทึกการแก้ไข" : "สร้าง Classroom"}
+                  <Sparkles className="h-4 w-4" /> {isSubmitting ? "กำลังบันทึก..." : editId ? "บันทึกการแก้ไข" : "สร้าง Classroom และตั้งค่าต่อ"}
                 </Button>
               </div>
             </DialogContent>
@@ -265,7 +228,7 @@ const TeacherDashboard = () => {
                           )}
                         </div>
                         <div className="mt-2.5 flex flex-wrap gap-1">
-                          {activity.requirements.map((r) => (
+                          {(activity.requirements || []).map((r: string) => (
                             <Badge key={r} variant="secondary" className="rounded-full bg-accent text-accent-foreground border-0 px-2 py-0.5 text-[9px]">
                               {r}
                             </Badge>
@@ -353,7 +316,7 @@ const TeacherDashboard = () => {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {activity.requirements.map((r) => (
+                        {(activity.requirements || []).map((r: string) => (
                           <Badge key={r} variant="secondary" className="rounded-full bg-accent text-accent-foreground border-0 px-2.5 py-0.5 text-[10px]">
                             {r}
                           </Badge>

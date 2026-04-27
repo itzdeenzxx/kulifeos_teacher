@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 
 import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 
 const TeacherOnboarding = () => {
   const { authUser } = useAuth();
@@ -29,14 +29,32 @@ const TeacherOnboarding = () => {
     setError("");
     setLoading(true);
     try {
+      const now = Date.now();
       const userRef = doc(db, "users", authUser.uid);
-      await updateDoc(userRef, {
+      await setDoc(userRef, {
+        uid: authUser.uid,
+        email: authUser.email || "",
+        role: "teacher",
         onboardingData: formData,
         onboardingStep: 1, // mark complete
-        updatedAt: Date.now(),
-      });
-      navigate("/");
-      window.location.reload(); 
+        updatedAt: now,
+        createdAt: now,
+      }, { merge: true });
+
+      localStorage.setItem(`ku_profile_${authUser.uid}`, JSON.stringify({
+        id: `T${authUser.uid.substring(0, 8).toUpperCase()}`,
+        uid: authUser.uid,
+        email: authUser.email || "",
+        role: "teacher",
+        onboardingStep: 1,
+        onboardingData: formData,
+        createdAt: now,
+        updatedAt: now,
+      }));
+      localStorage.setItem("ku_current_user_id", authUser.uid);
+
+      navigate("/", { replace: true });
+      window.location.reload();
     } catch (err: unknown) {
       console.error(err);
       const code = (err as { code?: string } | null)?.code || "";
@@ -44,7 +62,6 @@ const TeacherOnboarding = () => {
       const isPermissionDenied = code.includes("permission-denied") || /insufficient permissions/i.test(message);
 
       if (isPermissionDenied) {
-        const now = Date.now();
         localStorage.setItem(`ku_profile_${authUser.uid}`, JSON.stringify({
           id: `T${authUser.uid.substring(0, 8).toUpperCase()}`,
           uid: authUser.uid,
@@ -56,7 +73,7 @@ const TeacherOnboarding = () => {
           updatedAt: now,
         }));
         localStorage.setItem("ku_current_user_id", authUser.uid);
-        navigate("/");
+        navigate("/", { replace: true });
         window.location.reload();
       } else {
         setError("บันทึกข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง");

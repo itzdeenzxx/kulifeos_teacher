@@ -8,6 +8,8 @@ export interface UserProfile {
   uid: string;
   email: string;
   role: "student" | "teacher";
+  isTeacherVerified?: boolean;
+  verificationStatus?: "trusted-ku" | "verified-non-ku" | "unverified-non-ku";
   onboardingStep: number; // 0-3 for steps, 4 means completed
   onboardingData?: any;
   createdAt: number;
