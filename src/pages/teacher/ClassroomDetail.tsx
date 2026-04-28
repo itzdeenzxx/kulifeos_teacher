@@ -24,11 +24,13 @@ import {
   Send,
   TrendingUp,
   UserPlus,
+  Download,
 } from "lucide-react";
 import {
   calculateClassroomProgress,
   createAssignment,
   generateClassroomGroups,
+  clearExistingGroups,
   inviteStudentsByUid,
   updateAssignmentTargetType,
   upsertSubmissionFeedback,
@@ -125,7 +127,7 @@ const ClassroomDetail = () => {
     assignmentTitle: "",
     assignmentDescription: "",
     dueDate: "",
-    groupingMode: "skill" as GroupingMode,
+    groupingMode: "ai" as GroupingMode,
     membersPerGroup: "4",
     requiredSkills: [] as string[],
   });
@@ -136,7 +138,7 @@ const ClassroomDetail = () => {
   const [reviewingSubmissionId, setReviewingSubmissionId] = useState<string>("");
   const [feedbackText, setFeedbackText] = useState("");
   const [scoreValue, setScoreValue] = useState("");
-
+  const [selectedStudentForProfile, setSelectedStudentForProfile] = useState<any>(null);
   const teacherPolicy = useMemo(() => evaluateTeacherPolicy(userProfile), [userProfile]);
 
   const progress = useMemo(() => {
@@ -233,6 +235,7 @@ const ClassroomDetail = () => {
       members: Array<{
         memberId: string;
         memberName: string;
+        rawMember: any;
         statuses: Array<{ assignmentId: string; title: string; required: boolean; done: boolean }>;
       }>;
     }>();
@@ -267,6 +270,7 @@ const ClassroomDetail = () => {
       groupEntry.members.push({
         memberId: member.id,
         memberName: member.studentName,
+        rawMember: member,
         statuses,
       });
       matrixByGroup.set(member.groupId, groupEntry);
@@ -399,6 +403,50 @@ const ClassroomDetail = () => {
     }
   };
 
+  const handleExportGroupsCSV = () => {
+    if (groups.length === 0) {
+      toast({ title: "ไม่มีข้อมูล", description: "ยังไม่มีการจัดกลุ่มในห้องนี้", variant: "destructive" });
+      return;
+    }
+    const header = "รหัสนิสิต (UID),ชื่อ-นามสกุล,รหัสกลุ่ม,ชื่อกลุ่ม,ทักษะ\n";
+    const rows = groupMembers.map((member) => {
+      const group = groups.find((g) => g.id === member.groupId);
+      const skillsStr = (member.skills || []).join(";");
+      return `${member.studentUid},${member.studentName},${member.groupId},${group?.name || ""},${skillsStr}`;
+    }).join("\n");
+    
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `groups_${classroom?.name || "classroom"}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportGradesCSV = (assignmentId: string, assignmentTitle: string) => {
+    const assignmentSubmissions = submissions.filter((s) => s.assignmentId === assignmentId);
+    if (assignmentSubmissions.length === 0) {
+      toast({ title: "ไม่มีข้อมูล", description: "ยังไม่มีการส่งงานนี้", variant: "destructive" });
+      return;
+    }
+    const header = "รหัสนิสิต (UID),ชื่อ-นามสกุล,สถานะการส่งงาน,คะแนน,วันที่ส่ง\n";
+    const rows = assignmentSubmissions.map((sub) => {
+      const dateStr = sub.submittedAt ? new Date(sub.submittedAt).toLocaleString("th-TH") : "";
+      return `${sub.studentUid},${sub.studentName || ""},${sub.status},${sub.score || 0},${dateStr}`;
+    }).join("\n");
+
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `grades_${assignmentTitle}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleGenerateGroups = async () => {
     if (!authUser?.uid || !classroomId) return;
     if (!teacherPolicy.canGenerateGroups) {
@@ -462,6 +510,21 @@ const ClassroomDetail = () => {
       });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "จัดกลุ่มไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
+    } finally {
+      setGroupingLoading(false);
+    }
+  };
+
+  const handleClearGroups = async () => {
+    if (!classroomId || !teacherPolicy.canGenerateGroups) return;
+    if (!confirm("คุณต้องการลบกลุ่มทั้งหมดใช่หรือไม่? (การกระทำนี้ไม่สามารถย้อนกลับได้)")) return;
+    setGroupingLoading(true);
+    try {
+      await clearExistingGroups(classroomId);
+      toast({ title: "ลบกลุ่มทั้งหมดสำเร็จ" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "ลบกลุ่มไม่สำเร็จ";
       toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
     } finally {
       setGroupingLoading(false);
@@ -669,29 +732,29 @@ const ClassroomDetail = () => {
       <PageTransition>
         <div className="space-y-6 pb-10">
           <div className="rounded-3xl bg-gradient-to-br from-primary to-emerald-700 text-primary-foreground p-6 md:p-8 shadow-lg">
-            <div className="flex items-start justify-between gap-4">
-              <div>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="w-full">
                 <Link to="/" className="inline-flex items-center text-sm opacity-90 hover:opacity-100 mb-2">
                   <ArrowLeft className="h-4 w-4 mr-1" /> กลับ
                 </Link>
-                <h1 className="text-2xl md:text-4xl font-bold">{classroom.name}</h1>
+                <h1 className="text-2xl md:text-4xl font-bold line-clamp-2">{classroom.name}</h1>
                 <p className="mt-2 text-primary-foreground/85">รหัสห้อง: {classCode}</p>
                 <p className="text-primary-foreground/85">นิสิต {enrollments.length} คน · กลุ่ม {groups.length} กลุ่ม</p>
-                <div className="mt-3 flex gap-2 text-sm">
-                  <span className="rounded-full bg-white px-3 py-1 font-medium text-primary">กระแสข่าว</span>
-                  <Link to={`/classroom/${classroomId}/work`} className="rounded-full bg-white/15 px-3 py-1">งาน</Link>
-                  <Link to={`/classroom/${classroomId}/people`} className="rounded-full bg-white/15 px-3 py-1">สมาชิก</Link>
+                <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                  <span className="rounded-full bg-white px-3 py-1 font-medium text-primary shadow-sm">สตรีม</span>
+                  <Link to={`/classroom/${classroomId}/work`} className="rounded-full bg-white/15 px-3 py-1 hover:bg-white/20 transition-colors">งานของชั้นเรียน</Link>
+                  <Link to={`/classroom/${classroomId}/people`} className="rounded-full bg-white/15 px-3 py-1 hover:bg-white/20 transition-colors">ผู้คน</Link>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="secondary" className="rounded-xl" onClick={() => setQrOpen(true)}>
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <Button variant="secondary" className="rounded-xl flex-1 md:flex-none" onClick={() => setQrOpen(true)}>
                   <QrCode className="h-4 w-4 mr-1" /> QR / ลิงก์
                 </Button>
-                <Button variant="secondary" className="rounded-xl" onClick={() => setUidInviteOpen(true)}>
+                <Button variant="secondary" className="rounded-xl flex-1 md:flex-none" onClick={() => setUidInviteOpen(true)}>
                   <UserPlus className="h-4 w-4 mr-1" /> เพิ่มด้วย UID
                 </Button>
-                <Button variant="secondary" className="rounded-xl" onClick={() => setWizardOpen(true)}>
-                  ตั้งค่าด่วน
+                <Button variant="secondary" className="rounded-xl flex-1 md:flex-none" onClick={() => setWizardOpen(true)}>
+                  มอบหมายงาน / จัดกลุ่ม
                 </Button>
               </div>
             </div>
@@ -713,13 +776,13 @@ const ClassroomDetail = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 rounded-xl h-11">
-              <TabsTrigger value="classwork">Classwork</TabsTrigger>
-              <TabsTrigger value="groups">Groups</TabsTrigger>
-              <TabsTrigger value="people">People</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 rounded-xl h-auto md:h-11 bg-muted/50 p-1">
+              <TabsTrigger value="classwork" className="rounded-lg text-xs sm:text-sm">ภาพรวมห้องเรียน</TabsTrigger>
+              <TabsTrigger value="groups" className="rounded-lg text-xs sm:text-sm">รายชื่อกลุ่ม</TabsTrigger>
+              <TabsTrigger value="people" className="rounded-lg text-xs sm:text-sm">ข้อมูลเชิงลึกสมาชิก</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="classwork" className="space-y-4 mt-4">
+            <TabsContent value="classwork" className="space-y-4 mt-4 overflow-hidden w-full">
               <div className="grid gap-3 md:grid-cols-4">
                 <Card className="rounded-2xl border-border/50">
                   <CardContent className="p-4">
@@ -730,23 +793,23 @@ const ClassroomDetail = () => {
                 </Card>
                 <Card className="rounded-2xl border-border/50">
                   <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><FileWarning className="h-3.5 w-3.5" /> Overdue Risk</p>
+                    <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><FileWarning className="h-3.5 w-3.5 text-amber-500" /> ความเสี่ยงส่งงานล่าช้า</p>
                     <p className="text-2xl font-bold mt-1">{progress.overdueRisk}</p>
-                    <p className="text-xs text-muted-foreground">At-risk overdue deliverables</p>
+                    <p className="text-xs text-muted-foreground">จำนวนงานที่มีแนวโน้มล่าช้า</p>
                   </CardContent>
                 </Card>
                 <Card className="rounded-2xl border-border/50">
                   <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5" /> Weekly Velocity</p>
+                    <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5 text-emerald-500" /> การส่งงานรายสัปดาห์</p>
                     <p className="text-2xl font-bold mt-1">{progress.weeklyVelocity}</p>
-                    <p className="text-xs text-muted-foreground">Submissions in the last 7 days</p>
+                    <p className="text-xs text-muted-foreground">จำนวนงานที่ส่งใน 7 วันล่าสุด</p>
                   </CardContent>
                 </Card>
                 <Card className="rounded-2xl border-border/50">
                   <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><FileCheck2 className="h-3.5 w-3.5" /> Assignments</p>
+                    <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><FileCheck2 className="h-3.5 w-3.5 text-blue-500" /> งานที่มอบหมาย</p>
                     <p className="text-2xl font-bold mt-1">{assignments.length}</p>
-                    <p className="text-xs text-muted-foreground">Total assignments in this class</p>
+                    <p className="text-xs text-muted-foreground">จำนวนงานทั้งหมดในห้องเรียน</p>
                   </CardContent>
                 </Card>
               </div>
@@ -754,12 +817,12 @@ const ClassroomDetail = () => {
               <Card className="rounded-2xl border-border/50">
                 <CardHeader>
                   <CardTitle className="text-base inline-flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" /> Weekly Timeline (8 weeks)
+                    <TrendingUp className="h-4 w-4" /> สถิติการส่งงานรายสัปดาห์ (8 สัปดาห์)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {progress.weeklyTimeline.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No weekly timeline data yet.</p>
+                    <p className="text-sm text-muted-foreground">ยังไม่มีข้อมูลสถิติการส่งงาน</p>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {(() => {
@@ -783,80 +846,8 @@ const ClassroomDetail = () => {
               </Card>
 
               <Card className="rounded-2xl border-border/50">
-                <CardHeader className="flex-row items-center justify-between">
-                  <CardTitle className="text-base inline-flex items-center gap-2"><FolderKanban className="h-4 w-4" /> Assignment + Submission</CardTitle>
-                  <Button className="rounded-xl" onClick={() => setAssignmentOpen(true)} disabled={!teacherPolicy.canPublishAssignments}>
-                    <Send className="h-4 w-4 mr-2" /> สร้างงาน
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {assignments.length === 0 && <p className="text-sm text-muted-foreground">ยังไม่มีงาน</p>}
-                  {assignments.map((assignment) => {
-                    const submittedCount = assignmentSubmissionStats.get(assignment.id) || 0;
-                    const expectedCount = expectedRecipientsByAssignment.get(assignment.id) || 0;
-                    const dueTs = Date.parse(assignment.dueDate);
-                    const isOverdue = Number.isFinite(dueTs) && dueTs < Date.now();
-                    return (
-                      <div key={assignment.id} className="rounded-xl border border-border/50 p-3">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div>
-                            <div className="mb-2 w-[180px]">
-                              <Select
-                                value={assignment.targetType}
-                                onValueChange={(value: "classroom" | "group" | "individual") => handleUpdateAssignmentType(assignment.id, value)}
-                              >
-                                <SelectTrigger className="h-8 rounded-lg">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="classroom">ทั้งห้อง</SelectItem>
-                                  <SelectItem value="individual">งานเดี่ยว</SelectItem>
-                                  <SelectItem value="group">งานกลุ่ม</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <p className="text-sm font-semibold">{assignment.title}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{assignment.description || "-"}</p>
-                            <p className="text-xs text-muted-foreground mt-1 inline-flex items-center gap-1">
-                              <Clock className="h-3.5 w-3.5" /> Due {formatDateLabel(assignment.dueDate)}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">ประเภทงาน: {assignment.targetType}</p>
-                          </div>
-                          <div className="text-right">
-                            <Badge variant={isOverdue ? "destructive" : "secondary"} className="mb-2 border-0">
-                              ส่งแล้ว {submittedCount}/{expectedCount}
-                            </Badge>
-                            <div>
-                              <Button size="sm" variant="outline" className="rounded-lg" onClick={() => openReviewDialog(assignment.id)}>
-                                ตรวจงาน / Feedback
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-base">Contribution by Member</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {progress.contribution.length === 0 && <p className="text-sm text-muted-foreground">ยังไม่มีการส่งงาน</p>}
-                  {progress.contribution.map((item) => (
-                    <div key={item.studentUid} className="flex items-center justify-between rounded-lg border border-border/40 p-2">
-                      <span className="text-sm">{item.studentName}</span>
-                      <Badge className="bg-primary/10 text-primary border-0">{item.count} ครั้ง</Badge>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-base">Member Status Matrix</CardTitle>
+                  <CardTitle className="text-base">ภาพรวมสถานะการส่งงาน</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {memberStatusMatrix.length === 0 && (
@@ -866,33 +857,49 @@ const ClassroomDetail = () => {
                   {memberStatusMatrix.map((group) => (
                     <div key={group.groupId} className="rounded-xl border border-border/40 p-3">
                       <p className="text-sm font-semibold mb-3">{group.groupName}</p>
-                      <div className="overflow-auto">
-                        <div
-                          className="grid gap-2 min-w-[720px]"
-                          style={{ gridTemplateColumns: `180px repeat(${assignments.length}, minmax(120px, 1fr))` }}
-                        >
-                          <div className="text-xs font-semibold text-muted-foreground">Member</div>
-                          {assignments.map((assignment) => (
-                            <div key={assignment.id} className="text-xs font-semibold text-muted-foreground truncate" title={assignment.title}>
-                              {assignment.title}
-                            </div>
-                          ))}
+                      <div className="overflow-x-auto w-full max-w-full rounded-xl border border-border/40 bg-background/50">
+                        <div className="min-w-[720px]">
+                          {/* Header Row */}
+                          <div
+                            className="grid bg-muted/40 border-b border-border/40 p-2"
+                            style={{ gridTemplateColumns: `180px repeat(${assignments.length}, minmax(120px, 1fr))` }}
+                          >
+                            <div className="text-xs font-semibold text-muted-foreground px-2">สมาชิก</div>
+                            {assignments.map((assignment) => (
+                              <div key={assignment.id} className="text-xs font-semibold text-muted-foreground truncate px-2 border-l border-border/30" title={assignment.title}>
+                                {assignment.title}
+                              </div>
+                            ))}
+                          </div>
 
-                          {group.members.map((member) => (
-                            <Fragment key={member.memberId}>
-                              <div className="text-sm font-medium">{member.memberName}</div>
+                          {/* Member Rows */}
+                          {group.members.map((member, idx) => (
+                            <div
+                              key={member.memberId}
+                              className={`grid items-center p-2 transition-colors hover:bg-muted/60 ${idx !== group.members.length - 1 ? 'border-b border-border/30' : ''}`}
+                              style={{ gridTemplateColumns: `180px repeat(${assignments.length}, minmax(120px, 1fr))` }}
+                            >
+                              <button 
+                                onClick={() => setSelectedStudentForProfile({ ...member.rawMember, groupName: group.groupName })}
+                                className="text-sm font-medium px-2 flex items-center gap-2 hover:bg-muted/80 rounded-md transition-colors text-left py-1"
+                              >
+                                <Avatar className="h-6 w-6">
+                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{member.memberName.slice(0, 2)}</AvatarFallback>
+                                </Avatar>
+                                <span className="truncate">{member.memberName}</span>
+                              </button>
                               {member.statuses.map((status) => (
-                                <div key={`${member.memberId}-${status.assignmentId}`}>
+                                <div key={`${member.memberId}-${status.assignmentId}`} className="px-2 border-l border-border/30 h-full flex items-center">
                                   {!status.required ? (
-                                    <Badge variant="secondary" className="border-0 text-[10px]">N/A</Badge>
+                                    <span className="text-[10px] text-muted-foreground/40 font-medium ml-1">-</span>
                                   ) : status.done ? (
-                                    <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Submitted</Badge>
+                                    <Badge className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border-0 text-[10px] shadow-sm font-semibold">ส่งแล้ว</Badge>
                                   ) : (
-                                    <Badge variant="destructive" className="text-[10px]">Pending</Badge>
+                                    <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border-0 text-[10px] shadow-sm font-semibold">รอดำเนินการ</Badge>
                                   )}
                                 </div>
                               ))}
-                            </Fragment>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -905,8 +912,11 @@ const ClassroomDetail = () => {
             <TabsContent value="groups" className="space-y-4 mt-4">
               <Card className="rounded-2xl border-border/50">
                 <CardHeader className="flex-row items-center justify-between">
-                  <CardTitle className="text-base inline-flex items-center gap-2"><Brain className="h-4 w-4" /> Grouping Engine</CardTitle>
+                  <CardTitle className="text-base inline-flex items-center gap-2"><Brain className="h-4 w-4" /> จัดการกลุ่ม</CardTitle>
                   <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" className="h-9 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl" onClick={handleExportGroupsCSV} disabled={groups.length === 0}>
+                      <Download className="mr-1 h-4 w-4" /> Export CSV
+                    </Button>
                     <Button variant="outline" className="rounded-xl" onClick={() => setClassroomSetupOpen(true)}>
                       ตั้งค่า Members/Skills
                     </Button>
@@ -920,8 +930,11 @@ const ClassroomDetail = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    <Button variant="destructive" className="rounded-xl" onClick={handleClearGroups} disabled={groupingLoading || !teacherPolicy.canGenerateGroups || groups.length === 0}>
+                      ลบกลุ่มทั้งหมด
+                    </Button>
                     <Button className="rounded-xl" onClick={handleGenerateGroups} disabled={groupingLoading || !teacherPolicy.canGenerateGroups}>
-                      {groupingLoading ? "Generating..." : "Generate Groups"}
+                      {groupingLoading ? "กำลังดำเนินการ..." : "จัดกลุ่มอัตโนมัติ"}
                     </Button>
                   </div>
                 </CardHeader>
@@ -930,10 +943,10 @@ const ClassroomDetail = () => {
                     {groupingModeOptions.find((item) => item.value === groupingMode)?.description}
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Target skills: {(classroom.requirements || []).join(", ") || "ยังไม่ได้ตั้งค่า"}
+                    ทักษะเป้าหมาย: {(classroom.requirements || []).join(", ") || "ยังไม่ได้ตั้งค่า"}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Members per group: {classroom.membersPerGroup || 4}
+                    จำนวนสมาชิกต่อกลุ่ม: {classroom.membersPerGroup || 4}
                   </p>
                 </CardContent>
               </Card>
@@ -953,20 +966,27 @@ const ClassroomDetail = () => {
                       <CardHeader>
                         <CardTitle className="text-base flex items-center justify-between">
                           <span>{group.name}</span>
-                          <Badge variant="secondary" className="border-0">{members.length} members</Badge>
+                          <Badge variant="secondary" className="border-0">{members.length} คน</Badge>
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-3">
                         <div>
-                          <p className="text-xs text-muted-foreground">Progress</p>
+                          <p className="text-xs text-muted-foreground">ความคืบหน้า</p>
                           <p className="text-xl font-bold">{stats?.percent || 0}%</p>
                           <Progress className="h-2 mt-2" value={stats?.percent || 0} />
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {members.map((member) => (
-                            <Badge key={member.id} variant="secondary" className="border-0">
+                            <button 
+                              key={member.id} 
+                              onClick={() => setSelectedStudentForProfile({ ...member, groupName: group.name })}
+                              className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-card pr-3 p-1 text-sm font-medium transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            >
+                              <Avatar className="h-6 w-6">
+                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{member.studentName.slice(0, 2)}</AvatarFallback>
+                              </Avatar>
                               {member.studentName}
-                            </Badge>
+                            </button>
                           ))}
                         </div>
                       </CardContent>
@@ -979,9 +999,9 @@ const ClassroomDetail = () => {
             <TabsContent value="people" className="space-y-4 mt-4">
               <Card className="rounded-2xl border-border/50">
                 <CardHeader className="flex-row items-center justify-between">
-                  <CardTitle className="text-base">Student Roster</CardTitle>
+                  <CardTitle className="text-base">รายชื่อนิสิต</CardTitle>
                   <Button variant="outline" className="rounded-xl" onClick={() => setUidInviteOpen(true)}>
-                    <UserPlus className="h-4 w-4 mr-2" /> Add Students
+                    <UserPlus className="h-4 w-4 mr-2" /> เพิ่มนิสิต
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -990,17 +1010,41 @@ const ClassroomDetail = () => {
                     const fromGroup = groupMembers.find((member) => member.studentUid === enrollment.studentUid);
                     const groupName = (fromGroup as unknown as { groupName?: string } | undefined)?.groupName;
                     return (
-                      <div key={enrollment.id} className="rounded-xl border border-border/50 p-3 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>{(fromGroup?.studentName || enrollment.studentUid).slice(0, 2).toUpperCase()}</AvatarFallback>
+                      <div key={enrollment.id} className="rounded-xl border border-border/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-shadow hover:shadow-sm">
+                        <div className="flex items-start sm:items-center gap-3 min-w-0">
+                          <Avatar className="h-10 w-10 shrink-0">
+                            <AvatarFallback className="bg-primary/10 text-primary">{(fromGroup?.studentName || enrollment.studentUid).slice(0, 2).toUpperCase()}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <p className="text-sm font-medium">{fromGroup?.studentName || enrollment.studentUid}</p>
-                            <p className="text-xs text-muted-foreground">source: {enrollment.source}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{fromGroup?.studentName || enrollment.studentUid}</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                              {fromGroup?.skills && fromGroup.skills.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {fromGroup.skills.map((s, i) => (
+                                    <Badge key={i} variant="outline" className="text-[10px] font-normal px-1.5 py-0 border-sky-200 bg-sky-50 text-sky-700">{s}</Badge>
+                                  ))}
+                                </div>
+                              )}
+                              {fromGroup?.interests && fromGroup.interests.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {fromGroup.interests.map((s, i) => (
+                                    <Badge key={i} variant="outline" className="text-[10px] font-normal px-1.5 py-0 border-purple-200 bg-purple-50 text-purple-700">{s}</Badge>
+                                  ))}
+                                </div>
+                              )}
+                              {(!fromGroup?.skills?.length && !fromGroup?.interests?.length) && (
+                                <span className="text-[10px] text-muted-foreground">ไม่มีข้อมูลทักษะ/ความสนใจ</span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        {groupName && <Badge variant="secondary" className="border-0">{groupName}</Badge>}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {groupName ? (
+                            <Badge className="bg-primary/10 text-primary border-0 font-medium">{groupName}</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-muted-foreground border-dashed">ยังไม่จัดกลุ่ม</Badge>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -1098,10 +1142,10 @@ const ClassroomDetail = () => {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3].map((step) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {[1, 2, 3].filter(step => wizardForm.workMode === "group" || step !== 2).map((step, index) => (
                 <div key={step} className={`rounded-lg px-3 py-2 text-center text-sm ${wizardStep === step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                  Step {step}
+                  Step {index + 1}
                 </div>
               ))}
             </div>
@@ -1154,7 +1198,7 @@ const ClassroomDetail = () => {
               </div>
             )}
 
-            {wizardStep === 2 && (
+            {wizardStep === 2 && wizardForm.workMode === "group" && (
               <div className="space-y-3">
                 <Label>Step 2: วิธีจัดกลุ่ม</Label>
                 <Select
@@ -1209,22 +1253,26 @@ const ClassroomDetail = () => {
 
             {wizardStep === 3 && (
               <div className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4 text-sm">
-                <Label>Step 3: Preview</Label>
+                <Label>Step {wizardForm.workMode === "group" ? "3" : "2"}: Preview</Label>
                 <p><span className="font-medium">ประเภทงาน:</span> {wizardForm.workMode === "group" ? "งานกลุ่ม" : "งานเดี่ยว"}</p>
                 <p><span className="font-medium">ชื่องาน:</span> {wizardForm.assignmentTitle || "-"}</p>
                 <p><span className="font-medium">กำหนดส่ง:</span> {wizardForm.dueDate || "-"}</p>
-                <p><span className="font-medium">วิธีจัดกลุ่ม:</span> {groupingModeOptions.find((item) => item.value === wizardForm.groupingMode)?.label}</p>
-                <p><span className="font-medium">สมาชิกต่อกลุ่ม:</span> {wizardForm.membersPerGroup}</p>
-                <p><span className="font-medium">ทักษะเป้าหมาย:</span> {wizardForm.requiredSkills.join(", ") || "-"}</p>
+                {wizardForm.workMode === "group" && (
+                  <>
+                    <p><span className="font-medium">วิธีจัดกลุ่ม:</span> {groupingModeOptions.find((item) => item.value === wizardForm.groupingMode)?.label}</p>
+                    <p><span className="font-medium">สมาชิกต่อกลุ่ม:</span> {wizardForm.membersPerGroup}</p>
+                    <p><span className="font-medium">ทักษะเป้าหมาย:</span> {wizardForm.requiredSkills.join(", ") || "-"}</p>
+                  </>
+                )}
               </div>
             )}
 
             <div className="flex items-center justify-between gap-2">
-              <Button type="button" variant="outline" className="rounded-xl" onClick={() => setWizardStep((prev) => Math.max(1, prev - 1))} disabled={wizardStep === 1 || wizardSubmitting}>
+              <Button type="button" variant="outline" className="rounded-xl" onClick={() => setWizardStep((prev) => wizardForm.workMode === "individual" && prev === 3 ? 1 : Math.max(1, prev - 1))} disabled={wizardStep === 1 || wizardSubmitting}>
                 ย้อนกลับ
               </Button>
-              {wizardStep < 3 ? (
-                <Button type="button" className="rounded-xl" onClick={() => setWizardStep((prev) => Math.min(3, prev + 1))}>
+              {wizardStep < 3 && !(wizardForm.workMode === "individual" && wizardStep === 1) ? (
+                <Button type="button" className="rounded-xl" onClick={() => setWizardStep((prev) => wizardForm.workMode === "individual" && prev === 1 ? 3 : Math.min(3, prev + 1))}>
                   ถัดไป
                 </Button>
               ) : (
@@ -1358,6 +1406,52 @@ const ClassroomDetail = () => {
                 </Button>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!selectedStudentForProfile} onOpenChange={(open) => !open && setSelectedStudentForProfile(null)}>
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md rounded-2xl p-0 overflow-hidden">
+          <div className="bg-gradient-to-br from-primary/10 to-emerald-500/10 p-6 flex flex-col items-center justify-center border-b border-border/40">
+            <Avatar className="h-20 w-20 ring-4 ring-background shadow-md">
+              <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                {selectedStudentForProfile?.studentName?.slice(0, 2) || "??"}
+              </AvatarFallback>
+            </Avatar>
+            <DialogTitle className="mt-4 text-xl text-center">{selectedStudentForProfile?.studentName}</DialogTitle>
+            <p className="text-sm text-muted-foreground mt-1">UID: {selectedStudentForProfile?.studentUid}</p>
+          </div>
+          <div className="p-6 space-y-4">
+            {selectedStudentForProfile?.groupName && (
+              <div>
+                <h4 className="text-sm font-semibold text-muted-foreground mb-2">สังกัดกลุ่ม</h4>
+                <Badge variant="secondary" className="px-3 py-1 text-sm bg-primary/10 text-primary border-0">{selectedStudentForProfile.groupName}</Badge>
+              </div>
+            )}
+            <div>
+              <h4 className="text-sm font-semibold text-muted-foreground mb-2">ทักษะความสามารถ</h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedStudentForProfile?.skills?.length > 0 ? (
+                  selectedStudentForProfile.skills.map((skill: string) => (
+                    <Badge key={skill} variant="outline" className="border-primary/20 text-primary">{skill}</Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground">ไม่มีข้อมูลทักษะ</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-muted-foreground mb-2">ความสนใจ</h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedStudentForProfile?.interests?.length > 0 ? (
+                  selectedStudentForProfile.interests.map((interest: string) => (
+                    <Badge key={interest} variant="secondary" className="border-0 bg-muted">{interest}</Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground">ไม่มีข้อมูลความสนใจ</span>
+                )}
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

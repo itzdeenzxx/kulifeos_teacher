@@ -11,7 +11,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, UserPlus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { inviteStudentsByUid, useClassroomEnrollments, useGroupMembers, useTeacherActivities } from "@/lib/db";
+import { inviteStudentsByUid, useClassroomEnrollments, useGroupMembers, useTeacherActivities, injectMockStudentsWithSkills } from "@/lib/db";
+import { evaluateTeacherPolicy } from "@/lib/teacherPolicy";
 
 const ClassroomPeople = () => {
   const { classroomId } = useParams();
@@ -60,6 +61,22 @@ const ClassroomPeople = () => {
     }
   };
 
+  const handleInjectMock = async () => {
+    if (!classroomId) return;
+    setInviting(true);
+    try {
+      await injectMockStudentsWithSkills(classroomId);
+      toast({ title: "เพิ่ม 15 นิสิตจำลองพร้อมทักษะสำเร็จ", description: "ไปที่แท็บ 'การจัดกลุ่ม' เพื่อทดสอบ AI ได้เลย" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "เพิ่มข้อมูลจำลองไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const isGuest = evaluateTeacherPolicy(userProfile).isGuest;
+
   if (!classroom) {
     return (
       <TeacherLayout>
@@ -79,25 +96,31 @@ const ClassroomPeople = () => {
         <div className="space-y-5 pb-10">
           <div className="rounded-3xl bg-gradient-to-br from-primary to-emerald-700 p-6 text-primary-foreground shadow-lg">
             <Link to={`/classroom/${classroomId}`} className="mb-2 inline-flex items-center text-sm opacity-90 hover:opacity-100">
-              <ArrowLeft className="mr-1 h-4 w-4" /> กลับ Stream
+              <ArrowLeft className="mr-1 h-4 w-4" /> กลับภาพรวม
             </Link>
-            <h1 className="text-2xl font-bold">{classroom.name} - People</h1>
-            <div className="mt-3 flex gap-2 text-sm">
-              <Link to={`/classroom/${classroomId}`} className="rounded-full bg-white/15 px-3 py-1">Stream</Link>
-              <Link to={`/classroom/${classroomId}/work`} className="rounded-full bg-white/15 px-3 py-1">Work</Link>
-              <span className="rounded-full bg-white px-3 py-1 font-medium text-primary">People</span>
+            <h1 className="text-2xl font-bold">{classroom.name}</h1>
+            <p className="mt-2 text-primary-foreground/85">จัดการและดูรายชื่อสมาชิกในชั้นเรียน</p>
+            <div className="mt-4 flex gap-2 text-sm">
+              <Link to={`/classroom/${classroomId}`} className="rounded-full bg-white/15 px-3 py-1 hover:bg-white/20 transition-colors">สตรีม</Link>
+              <Link to={`/classroom/${classroomId}/work`} className="rounded-full bg-white/15 px-3 py-1 hover:bg-white/20 transition-colors">งานของชั้นเรียน</Link>
+              <span className="rounded-full bg-white px-3 py-1 text-primary font-medium shadow-sm">ผู้คน</span>
             </div>
           </div>
 
           <Card className="rounded-2xl border-border/50">
-            <CardHeader className="flex-row items-center justify-between">
-              <CardTitle className="text-base">Students</CardTitle>
-              <Button variant="outline" className="rounded-xl" onClick={() => setUidInviteOpen(true)}>
-                <UserPlus className="mr-2 h-4 w-4" /> Add Students
-              </Button>
+            <CardHeader className="flex-row items-center justify-between pb-3">
+              <CardTitle className="text-base">รายชื่อนิสิตในชั้นเรียน</CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" className="rounded-xl border-dashed border-sky-400 text-sky-600 bg-sky-50" onClick={handleInjectMock} disabled={inviting}>
+                  {inviting ? "กำลังเพิ่ม..." : "+ สร้าง 15 นิสิตจำลอง (ทดสอบ AI)"}
+                </Button>
+                <Button variant="outline" className="rounded-xl" onClick={() => setUidInviteOpen(true)}>
+                  <UserPlus className="mr-2 h-4 w-4" /> เพิ่มนิสิต
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {enrollments.length === 0 && <p className="text-sm text-muted-foreground">No students enrolled yet.</p>}
+            <CardContent className="space-y-3">
+              {enrollments.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">ยังไม่มีนิสิตในห้องเรียน</p>}
               {enrollments.map((enrollment) => {
                 const fromGroup = groupMembers.find((member) => member.studentUid === enrollment.studentUid);
                 const groupName = (fromGroup as unknown as { groupName?: string } | undefined)?.groupName;
@@ -124,8 +147,8 @@ const ClassroomPeople = () => {
       <Dialog open={uidInviteOpen} onOpenChange={setUidInviteOpen}>
         <DialogContent className="rounded-2xl sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add Students by UID</DialogTitle>
-            <DialogDescription>Students are enrolled immediately. Separate UIDs by space, comma, or newline.</DialogDescription>
+            <DialogTitle>เพิ่มนิสิตด้วย UID</DialogTitle>
+            <DialogDescription>พิมพ์ UID หรือรหัสนิสิต (คั่นด้วยช่องว่าง, จุลภาค หรือเว้นบรรทัด) นิสิตจะถูกเพิ่มเข้าชั้นเรียนทันที</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <Input
@@ -135,7 +158,7 @@ const ClassroomPeople = () => {
               className="rounded-xl"
             />
             <Button className="w-full rounded-xl" onClick={handleInviteByUid} disabled={inviting}>
-              {inviting ? "Adding..." : "Add Students Now"}
+              {inviting ? "กำลังเพิ่มรายชื่อ..." : "เพิ่มนิสิตทันที"}
             </Button>
           </div>
         </DialogContent>

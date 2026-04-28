@@ -182,6 +182,7 @@ export interface ClassroomEnrollment {
 export interface ClassroomGroup {
   id: string;
   classroomId: string;
+  assignmentId?: string | null;
   name: string;
   mode: GroupingMode;
   membersPerGroup: number;
@@ -325,14 +326,22 @@ export function useAssignmentsByClassroom(classroomId?: string) {
 
     const q = query(
       collection(db, "assignments"),
-      where("classroomId", "==", classroomId),
-      orderBy("dueDate", "asc")
+      where("classroomId", "==", classroomId)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setData(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as ClassroomAssignment));
+      const items = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as ClassroomAssignment);
+      items.sort((a, b) => {
+        const dateA = a.dueDate ? Date.parse(a.dueDate) : 0;
+        const dateB = b.dueDate ? Date.parse(b.dueDate) : 0;
+        return dateA - dateB;
+      });
+      setData(items);
       setLoading(false);
-    }, () => setLoading(false));
+    }, (err) => {
+      console.error("Error fetching assignments:", err);
+      setLoading(false);
+    });
 
     return () => unsubscribe();
   }, [classroomId]);
@@ -440,6 +449,52 @@ export function useGroupMembers(classroomId?: string) {
 
     return () => unsubscribe();
   }, [classroomId]);
+
+  return { data, loading };
+}
+
+export function useAssignmentGroups(assignmentId?: string) {
+  const [data, setData] = useState<ClassroomGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!assignmentId) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+
+    const q = query(collection(db, "groups"), where("assignmentId", "==", assignmentId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setData(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as ClassroomGroup));
+      setLoading(false);
+    }, () => setLoading(false));
+
+    return () => unsubscribe();
+  }, [assignmentId]);
+
+  return { data, loading };
+}
+
+export function useAssignmentGroupMembers(assignmentId?: string) {
+  const [data, setData] = useState<GroupMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!assignmentId) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+
+    const q = query(collection(db, "groupMembers"), where("assignmentId", "==", assignmentId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setData(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as GroupMember));
+      setLoading(false);
+    }, () => setLoading(false));
+
+    return () => unsubscribe();
+  }, [assignmentId]);
 
   return { data, loading };
 }
@@ -650,14 +705,25 @@ function buildInterestGroups(students: any[], membersPerGroup: number, requiredI
   return groups;
 }
 
-async function clearExistingGroups(classroomId: string) {
-  const existingGroups = await getDocs(query(collection(db, "groups"), where("classroomId", "==", classroomId)));
-  const existingMembers = await getDocs(query(collection(db, "groupMembers"), where("classroomId", "==", classroomId)));
-  const allRefs = [
-    ...existingGroups.docs.map((item) => item.ref),
-    ...existingMembers.docs.map((item) => item.ref),
-  ];
+export async function clearExistingGroups(classroomId: string, assignmentId?: string) {
+  let groupRefs: any[] = [];
+  let memberRefs: any[] = [];
 
+  if (assignmentId) {
+    const qGroups = query(collection(db, "groups"), where("classroomId", "==", classroomId), where("assignmentId", "==", assignmentId));
+    const qMembers = query(collection(db, "groupMembers"), where("classroomId", "==", classroomId), where("assignmentId", "==", assignmentId));
+    const [snapG, snapM] = await Promise.all([getDocs(qGroups), getDocs(qMembers)]);
+    groupRefs = snapG.docs.map(d => d.ref);
+    memberRefs = snapM.docs.map(d => d.ref);
+  } else {
+    const qGroups = query(collection(db, "groups"), where("classroomId", "==", classroomId));
+    const qMembers = query(collection(db, "groupMembers"), where("classroomId", "==", classroomId));
+    const [snapG, snapM] = await Promise.all([getDocs(qGroups), getDocs(qMembers)]);
+    groupRefs = snapG.docs.filter(d => !d.data().assignmentId).map(d => d.ref);
+    memberRefs = snapM.docs.filter(d => !d.data().assignmentId).map(d => d.ref);
+  }
+
+  const allRefs = [...groupRefs, ...memberRefs];
   for (let idx = 0; idx < allRefs.length; idx += 400) {
     const batch = writeBatch(db);
     allRefs.slice(idx, idx + 400).forEach((ref) => batch.delete(ref));
@@ -666,6 +732,7 @@ async function clearExistingGroups(classroomId: string) {
 }
 
 export async function generateClassroomGroups(params: {
+  assignmentId?: string;
   classroomId: string;
   teacherUid: string;
   mode: GroupingMode;
@@ -680,14 +747,20 @@ export async function generateClassroomGroups(params: {
     return { groupCount: 0, memberCount: 0 };
   }
 
-  await clearExistingGroups(params.classroomId);
+  await clearExistingGroups(params.classroomId, params.assignmentId);
 
   let groups = [] as Array<{ name: string; members: any[]; requiredCoverage: Set<string>; aiReason?: string }>;
   if (params.aiSuggestedGroups && params.aiSuggestedGroups.length > 0) {
     const byUid = new Map(students.map((student) => [student.uid, student]));
+    const assignedUids = new Set<string>();
     groups = params.aiSuggestedGroups.map((group, index) => {
       const members = (group.memberUids || [])
-        .map((uid) => byUid.get(uid))
+        .map((uid) => {
+          if (assignedUids.has(uid)) return null;
+          const st = byUid.get(uid);
+          if (st) assignedUids.add(uid);
+          return st;
+        })
         .filter(Boolean) as any[];
       return {
         name: group.name || `A${index + 1}`,
@@ -716,6 +789,7 @@ export async function generateClassroomGroups(params: {
       ref: groupRef,
       payload: {
         classroomId: params.classroomId,
+        assignmentId: params.assignmentId || null,
         name: group.name,
         mode: params.mode,
         membersPerGroup: params.membersPerGroup,
@@ -733,6 +807,7 @@ export async function generateClassroomGroups(params: {
         ref: memberRef,
         payload: {
           classroomId: params.classroomId,
+          assignmentId: params.assignmentId || null,
           groupId: groupRef.id,
           groupName: group.name,
           studentUid: student.uid,
@@ -1085,4 +1160,46 @@ export async function addTasksToProjectSpace(spaceId: string, tasks: TaskItem[])
     console.error("Error adding tasks to project space:", error);
     throw error;
   }
+}
+
+const mockNames = [
+  "สมชาย ใจดี", "สมหญิง รักเรียน", "กนกวรรณ ตั้งใจ", "ชัยชนะ มุ่งมั่น",
+  "ศิริพร อดทน", "พงศกร พัฒนา", "วิภาดา ร่าเริง", "นัฐพงษ์ ยิ้มแย้ม",
+  "สุวิทย์ คิดดี", "อภิญญา มีฝัน", "ธนพล กล้าหาญ", "ดาริกา สวยงาม",
+  "เอกราช ชาติชาย", "สุพรรณี ใจเย็น", "ปิยะราช รักเพื่อน"
+];
+
+const mockSkills = ["React", "Node.js", "Python", "Data Analysis", "UI/UX", "Figma", "Marketing", "Project Management", "Java", "C++"];
+const mockInterests = ["Web Development", "AI/ML", "Data Science", "Business", "Design", "Game Dev"];
+
+function getRandomSubset(arr: string[], min = 1, max = 3) {
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, Math.floor(Math.random() * (max - min + 1)) + min);
+}
+
+export async function injectMockStudentsWithSkills(classroomId: string) {
+  const batch = writeBatch(db);
+  const uids: string[] = [];
+
+  for (let i = 0; i < 15; i++) {
+    const uid = `mock_student_${Math.floor(Math.random() * 100000)}_${i}`;
+    uids.push(uid);
+    const [firstName, ...rest] = mockNames[i].split(" ");
+
+    batch.set(doc(db, "users", uid), {
+      email: `${uid}@student.ku.ac.th`,
+      onboardingData: {
+        firstName,
+        lastName: rest.join(" "),
+        fullName: mockNames[i],
+        selectedSkills: getRandomSubset(mockSkills, 2, 4),
+        interests: getRandomSubset(mockInterests, 1, 3),
+        type: "student"
+      },
+      createdAt: serverTimestamp()
+    }, { merge: true });
+  }
+
+  await batch.commit();
+  return inviteStudentsByUid(classroomId, "system_mock", uids, { actorName: "System Mock" });
 }

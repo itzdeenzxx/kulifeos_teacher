@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Clock, Send } from "lucide-react";
+import { ArrowLeft, Clock, Send, Download } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { evaluateTeacherPolicy } from "@/lib/teacherPolicy";
@@ -77,7 +77,7 @@ const ClassroomWork = () => {
       }
       if (assignment.targetType === "individual") {
         if (!assignment.targetIds || assignment.targetIds.length === 0) {
-          map.set(assignment.id, enrolledSet.size);
+          map.set(assignment.id, 0);
           return;
         }
         const target = new Set<string>();
@@ -89,7 +89,7 @@ const ClassroomWork = () => {
       }
 
       if (!assignment.targetIds || assignment.targetIds.length === 0) {
-        map.set(assignment.id, membersByGroupId.size);
+        map.set(assignment.id, groups.length);
         return;
       }
       const target = new Set<string>();
@@ -183,6 +183,28 @@ const ClassroomWork = () => {
     }
   };
 
+  const handleExportGradesCSV = (assignmentId: string, assignmentTitle: string) => {
+    const assignmentSubmissions = submissions.filter((s) => s.assignmentId === assignmentId);
+    if (assignmentSubmissions.length === 0) {
+      toast({ title: "ไม่มีข้อมูล", description: "ยังไม่มีการส่งงานนี้", variant: "destructive" });
+      return;
+    }
+    const header = "รหัสนิสิต (UID),ชื่อ-นามสกุล,สถานะการส่งงาน,คะแนน,วันที่ส่ง\n";
+    const rows = assignmentSubmissions.map((sub) => {
+      const dateStr = sub.submittedAt ? new Date(sub.submittedAt).toLocaleString("th-TH") : "";
+      return `${sub.studentUid},${sub.studentName || ""},${sub.status},${sub.score || 0},${dateStr}`;
+    }).join("\n");
+
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `grades_${assignmentTitle}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (!classroom) {
     return (
       <TeacherLayout>
@@ -202,13 +224,14 @@ const ClassroomWork = () => {
         <div className="space-y-5 pb-10">
           <div className="rounded-3xl bg-gradient-to-br from-primary to-emerald-700 p-6 text-primary-foreground shadow-lg">
             <Link to={`/classroom/${classroomId}`} className="mb-2 inline-flex items-center text-sm opacity-90 hover:opacity-100">
-              <ArrowLeft className="mr-1 h-4 w-4" /> กลับ Stream
+              <ArrowLeft className="mr-1 h-4 w-4" /> กลับภาพรวม
             </Link>
-            <h1 className="text-2xl font-bold">{classroom.name} - Work</h1>
-            <div className="mt-3 flex gap-2 text-sm">
-              <Link to={`/classroom/${classroomId}`} className="rounded-full bg-white/15 px-3 py-1">Stream</Link>
-              <span className="rounded-full bg-white px-3 py-1 text-primary font-medium">Work</span>
-              <Link to={`/classroom/${classroomId}/people`} className="rounded-full bg-white/15 px-3 py-1">People</Link>
+            <h1 className="text-2xl font-bold">{classroom.name}</h1>
+            <p className="mt-2 text-primary-foreground/85">จัดการและมอบหมายงานให้นิสิต</p>
+            <div className="mt-4 flex gap-2 text-sm">
+              <Link to={`/classroom/${classroomId}`} className="rounded-full bg-white/15 px-3 py-1 hover:bg-white/20 transition-colors">สตรีม</Link>
+              <span className="rounded-full bg-white px-3 py-1 text-primary font-medium shadow-sm">งานของชั้นเรียน</span>
+              <Link to={`/classroom/${classroomId}/people`} className="rounded-full bg-white/15 px-3 py-1 hover:bg-white/20 transition-colors">ผู้คน</Link>
             </div>
             {!teacherPolicy.isVerified && (
               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
@@ -223,46 +246,49 @@ const ClassroomWork = () => {
           </div>
 
           <Card className="rounded-2xl border-border/50">
-            <CardHeader className="flex-row items-center justify-between">
-              <CardTitle className="text-base">Assignments</CardTitle>
+            <CardHeader className="flex-row items-center justify-between pb-3">
+              <CardTitle className="text-base">งานที่มอบหมาย</CardTitle>
               <Button className="rounded-xl" onClick={() => setAssignmentOpen(true)} disabled={!teacherPolicy.canPublishAssignments}>
                 <Send className="mr-2 h-4 w-4" /> เพิ่มงาน
               </Button>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {assignments.length === 0 && <p className="text-sm text-muted-foreground">ยังไม่มีงาน</p>}
+            <CardContent className="space-y-4">
+              {assignments.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">ยังไม่มีการมอบหมายงาน</p>}
               {assignments.map((assignment) => {
                 const submittedCount = assignmentSubmissionStats.get(assignment.id) || 0;
                 const expectedCount = expectedRecipientsByAssignment.get(assignment.id) || 0;
                 return (
-                  <div key={assignment.id} className="rounded-xl border border-border/50 p-3">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <div className="mb-2 w-[180px]">
+                  <div key={assignment.id} className="rounded-xl border border-border/40 bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-foreground">{assignment.title}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{assignment.description || "ไม่มีคำอธิบาย"}</p>
+                        <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
+                          <Clock className="h-3.5 w-3.5" /> กำหนดส่ง {formatDateLabel(assignment.dueDate)}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-start sm:items-end gap-3 sm:w-[200px] shrink-0">
+                        <div className="w-full">
                           <Select value={assignment.targetType} onValueChange={(value: "classroom" | "group" | "individual") => handleUpdateAssignmentType(assignment.id, value)}>
-                            <SelectTrigger className="h-8 rounded-lg"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-9 w-full rounded-lg bg-muted/50 border-border/50"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="classroom">ทั้งห้อง</SelectItem>
-                              <SelectItem value="individual">งานเดี่ยว</SelectItem>
-                              <SelectItem value="group">งานกลุ่ม</SelectItem>
+                              <SelectItem value="classroom">มอบหมายทุกคน</SelectItem>
+                              <SelectItem value="individual">มอบหมายรายบุคคล</SelectItem>
+                              <SelectItem value="group">มอบหมายแบบกลุ่ม</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                        <p className="text-sm font-semibold">{assignment.title}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{assignment.description || "-"}</p>
-                        <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3.5 w-3.5" /> Due {formatDateLabel(assignment.dueDate)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="secondary" className="border-0">Submitted {submittedCount}/{expectedCount}</Badge>
-                        {assignment.targetType === "group" && (
-                          <div className="mt-2">
+                        <div className="flex w-full items-center justify-between sm:justify-end gap-3">
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleExportGradesCSV(assignment.id, assignment.title)}>
+                            <Download className="mr-1 h-3.5 w-3.5" /> Export Excel
+                          </Button>
+                          <Badge variant="secondary" className="border-0 bg-primary/10 text-primary">ส่งแล้ว {submittedCount}/{expectedCount}</Badge>
+                          {assignment.targetType === "group" && (
                             <Link to={`/assignment/${assignment.id}/groups`}>
-                              <Button variant="outline" size="sm" className="rounded-lg">ดูผล AI Group</Button>
+                              <Button variant="outline" size="sm" className="h-7 px-2 text-xs rounded-md">ดูผล Group</Button>
                             </Link>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -5,19 +5,76 @@ import { PageTransition } from "@/components/MotionWrappers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Sparkles } from "lucide-react";
-import { useAssignmentById, useClassroomGroups, useGroupMembers, useTeacherActivities } from "@/lib/db";
-
+import { ArrowLeft, Sparkles, Wand2 } from "lucide-react";
+import { useAssignmentById, useAssignmentGroups, useAssignmentGroupMembers, useTeacherActivities, generateClassroomGroups, getClassroomStudentProfiles } from "@/lib/db";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { generateAIGroupsWithTogether } from "@/lib/aiAnalyze";
+import { useState } from "react";
 const AssignmentGroups = () => {
   const { assignmentId } = useParams();
   const { data: assignment, loading: assignmentLoading } = useAssignmentById(assignmentId);
   const classroomId = assignment?.classroomId;
 
-  const { data: classroomGroups = [] } = useClassroomGroups(classroomId);
-  const { data: groupMembers = [] } = useGroupMembers(classroomId);
+  const { data: classroomGroups = [] } = useAssignmentGroups(assignmentId);
+  const { data: groupMembers = [] } = useAssignmentGroupMembers(assignmentId);
   const { data: teacherActivities = [] } = useTeacherActivities();
 
+  const { authUser, userProfile } = useAuth();
+  const { toast } = useToast();
+  const [generating, setGenerating] = useState(false);
+
   const classroom = teacherActivities.find((item) => String(item.id) === String(classroomId));
+
+  const handleAIGenerateGroups = async () => {
+    if (!authUser || !classroomId || !assignmentId) return;
+    setGenerating(true);
+    try {
+      const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser.email || "";
+      
+      // ดึงนิสิตจาก enrollments (ไม่ใช่จาก groupMembers ที่อาจว่างเปล่า)
+      const enrolledStudents = await getClassroomStudentProfiles(classroomId);
+      const students = enrolledStudents.map(s => ({
+        uid: s.uid,
+        displayName: s.displayName,
+        skills: s.skills || [],
+        interests: s.interests || []
+      }));
+
+      if (students.length === 0) {
+        toast({ title: "ไม่พบรายชื่อนิสิต", description: "กรุณาเพิ่มนิสิตเข้าห้องเรียนก่อน", variant: "destructive" });
+        return;
+      }
+
+      const aiResult = await generateAIGroupsWithTogether({
+        students,
+        membersPerGroup: 3,
+        requiredSkills: [],
+        mode: "interest"
+      });
+
+      await generateClassroomGroups({
+        classroomId,
+        assignmentId,
+        teacherUid: authUser.uid,
+        mode: "interest",
+        membersPerGroup: 3,
+        requiredSkills: [],
+        aiSuggestedGroups: aiResult.groups.map(g => ({
+          name: g.name,
+          memberUids: g.memberUids,
+          reason: g.reason
+        })),
+        meta: { classroomName: classroom?.name, actorName: teacherName }
+      });
+
+      toast({ title: "จัดกลุ่มด้วย AI สำเร็จ" });
+    } catch (error: any) {
+      toast({ title: "เกิดข้อผิดพลาด", description: error.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const membersByGroupId = useMemo(() => {
     const map = new Map<string, typeof groupMembers>();
@@ -78,9 +135,23 @@ const AssignmentGroups = () => {
             <Link to={`/classroom/${assignment.classroomId}/work`} className="mb-2 inline-flex items-center text-sm opacity-90 hover:opacity-100">
               <ArrowLeft className="mr-1 h-4 w-4" /> กลับหน้า Work
             </Link>
-            <h1 className="text-2xl font-bold">AI Group Result</h1>
-            <p className="mt-1 text-sm opacity-90">งาน: {assignment.title}</p>
-            <p className="text-sm opacity-90">ห้องเรียน: {classroom?.name || assignment.classroomId}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold">{assignment.title}</h1>
+                <p className="mt-1 text-sm opacity-90">กลุ่มสำหรับงานนี้ (Assignment Groups)</p>
+                <p className="text-sm opacity-90">ห้องเรียน: {classroom?.name || assignment.classroomId}</p>
+              </div>
+              {classroomGroups.length === 0 && (
+                <Button 
+                  onClick={handleAIGenerateGroups} 
+                  disabled={generating}
+                  className="bg-white text-primary hover:bg-white/90 rounded-xl shadow-md border-0"
+                >
+                  <Wand2 className={`mr-2 h-4 w-4 ${generating ? 'animate-spin' : ''}`} />
+                  {generating ? "กำลังประมวลผล..." : "จัดกลุ่มด้วย AI"}
+                </Button>
+              )}
+            </div>
           </div>
 
           <Card className="rounded-2xl border-border/50">
