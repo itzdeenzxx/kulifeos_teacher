@@ -135,7 +135,7 @@ export interface TaskItem { id: string; title: string; description?: string; sta
 export interface ProjectSpace { id: string; name: string; description: string; ownerId?: string; members: { id?: string; name: string; avatar: string; role: string }[]; tasks: TaskItem[]; classroomId?: number; groupName?: string; }
 export type DbProjectSpace = ProjectSpace;
 
-export type GroupingMode = "random" | "skill" | "interest";
+export type GroupingMode = "random" | "skill" | "interest" | "ai";
 
 export interface ClassroomAssignment {
   id: string;
@@ -855,6 +855,188 @@ export async function generateClassroomGroups(params: {
   });
 
   return { groupCount, memberCount };
+}
+
+export async function copyClassroomGroupsToAssignment(params: {
+  classroomId: string;
+  assignmentId: string;
+  teacherUid: string;
+  meta?: { actorName?: string; classroomName?: string };
+}) {
+  await assertCanGenerateGroups(params.teacherUid);
+  await clearExistingGroups(params.classroomId, params.assignmentId);
+
+  const qGroups = query(collection(db, "groups"), where("classroomId", "==", params.classroomId));
+  const qMembers = query(collection(db, "groupMembers"), where("classroomId", "==", params.classroomId));
+  const [snapG, snapM] = await Promise.all([getDocs(qGroups), getDocs(qMembers)]);
+
+  const defaultGroups = snapG.docs.filter(d => !d.data().assignmentId);
+  const defaultMembers = snapM.docs.filter(d => !d.data().assignmentId);
+
+  const records: any[] = [];
+  const groupIdMap = new Map<string, string>();
+
+  defaultGroups.forEach(d => {
+    const data = d.data();
+    const groupRef = doc(collection(db, "groups"));
+    groupIdMap.set(d.id, groupRef.id);
+    records.push({
+      ref: groupRef,
+      payload: {
+        ...data,
+        assignmentId: params.assignmentId,
+        createdAt: serverTimestamp(),
+      }
+    });
+  });
+
+  defaultMembers.forEach(d => {
+    const data = d.data();
+    const memberRef = doc(collection(db, "groupMembers"));
+    const newGroupId = groupIdMap.get(data.groupId) || data.groupId;
+    records.push({
+      ref: memberRef,
+      payload: {
+        ...data,
+        assignmentId: params.assignmentId,
+        groupId: newGroupId,
+        createdAt: serverTimestamp(),
+      }
+    });
+  });
+
+  const chunkSize = 350;
+  for (let idx = 0; idx < records.length; idx += chunkSize) {
+    const batch = writeBatch(db);
+    records.slice(idx, idx + chunkSize).forEach(entry => batch.set(entry.ref, entry.payload));
+    await batch.commit();
+  }
+}
+
+export async function createEmptyAssignmentGroups(params: {
+  classroomId: string;
+  assignmentId: string;
+  teacherUid: string;
+  groupCount: number;
+  meta?: { actorName?: string; classroomName?: string };
+}) {
+  await assertCanGenerateGroups(params.teacherUid);
+  await clearExistingGroups(params.classroomId, params.assignmentId);
+
+  const records: any[] = [];
+  for (let i = 0; i < params.groupCount; i++) {
+    const groupRef = doc(collection(db, "groups"));
+    records.push({
+      ref: groupRef,
+      payload: {
+        classroomId: params.classroomId,
+        assignmentId: params.assignmentId,
+        name: `กลุ่ม ${i + 1}`,
+        mode: "manual",
+        membersPerGroup: 0,
+        requiredSkills: [],
+        aiReason: "สร้างกลุ่มเพื่อจัดสมาชิกด้วยตนเอง",
+        createdByUid: params.teacherUid,
+        createdAt: serverTimestamp(),
+      }
+    });
+  }
+
+  const chunkSize = 350;
+  for (let idx = 0; idx < records.length; idx += chunkSize) {
+    const batch = writeBatch(db);
+    records.slice(idx, idx + chunkSize).forEach(entry => batch.set(entry.ref, entry.payload));
+    await batch.commit();
+  }
+}
+
+
+export async function setAssignmentGroupMember(params: {
+  classroomId: string;
+  assignmentId?: string | null;
+  studentUid: string;
+  studentName: string;
+  newGroupId?: string | null;
+  newGroupName?: string | null;
+}) {
+  const qArgs: any[] = [collection(db, "groupMembers"), where("classroomId", "==", params.classroomId), where("studentUid", "==", params.studentUid)];
+  if (params.assignmentId) {
+    qArgs.push(where("assignmentId", "==", params.assignmentId));
+  } else {
+    qArgs.push(where("assignmentId", "==", null));
+  }
+  
+  const snaps = await getDocs(query.apply(null, qArgs as any));
+  
+  if (!params.newGroupId) {
+    snaps.forEach(d => deleteDoc(d.ref));
+    return;
+  }
+  
+  if (snaps.empty) {
+    await addDoc(collection(db, "groupMembers"), {
+      classroomId: params.classroomId,
+      assignmentId: params.assignmentId || null,
+      groupId: params.newGroupId,
+      groupName: params.newGroupName,
+      studentUid: params.studentUid,
+      studentName: params.studentName,
+      skills: [],
+      interests: [],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  } else {
+    snaps.forEach(d => updateDoc(d.ref, {
+      groupId: params.newGroupId,
+      groupName: params.newGroupName,
+      updatedAt: serverTimestamp()
+    }));
+  }
+}
+
+export async function deleteSingleGroup(groupId: string, classroomId: string) {
+  const groupRef = doc(db, "groups", groupId);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) return;
+  const groupData = groupSnap.data();
+
+  const batch = writeBatch(db);
+  
+  // 1. Delete Group Document
+  batch.delete(groupRef);
+  
+  // 2. Delete all members in this group
+  const qMembers = query(collection(db, "groupMembers"), where("groupId", "==", groupId));
+  const snapM = await getDocs(qMembers);
+  snapM.forEach(d => batch.delete(d.ref));
+  
+  // 3. Commit
+  await batch.commit();
+
+  // 4. Update classroom group count if it's a classroom-level group
+  if (!groupData.assignmentId) {
+    const classroomRef = doc(db, "teacherActivities", classroomId);
+    await updateDoc(classroomRef, {
+      groups: increment(-1),
+      updatedAt: Date.now()
+    });
+  }
+}
+
+export async function renameGroup(groupId: string, newName: string) {
+  const batch = writeBatch(db);
+  
+  // 1. Update Group Document
+  batch.update(doc(db, "groups", groupId), { name: newName, updatedAt: serverTimestamp() });
+  
+  // 2. Update all member documents to reflect new name
+  const qMembers = query(collection(db, "groupMembers"), where("groupId", "==", groupId));
+  const snapM = await getDocs(qMembers);
+  snapM.forEach(d => batch.update(d.ref, { groupName: newName, updatedAt: serverTimestamp() }));
+  
+  // 3. Commit
+  await batch.commit();
 }
 
 export function calculateClassroomProgress(args: {

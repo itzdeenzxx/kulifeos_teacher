@@ -166,7 +166,7 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
       </nav>
 
       {/* Content */}
-      <main className="mx-auto max-w-6xl px-4 py-4 pb-24 md:px-8 md:py-8 md:pb-8">
+      <main className="mx-auto max-w-6xl px-3 sm:px-6 py-4 pb-24 md:px-8 md:py-8 md:pb-8">
         <motion.div
           key={location.pathname}
           initial={{ opacity: 0, y: 6 }}

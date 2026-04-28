@@ -312,15 +312,20 @@ export async function generateAIGroupsWithTogether(input: AIGroupingRequest): Pr
     groupSize: Math.max(2, Number(input.groupSize) || 4),
     requiredSkills: input.requiredSkills,
     students: input.students,
+    mode: input.mode || "skill"
   };
 
   const prompt = `You are an AI classroom grouping assistant.
-Given JSON data for students and target skills, create balanced groups for project work.
+Given JSON data for students and target requirements, create balanced groups for project work.
+
+Grouping Strategy:
+- Current Mode: ${payload.mode === "interest" ? "Aptitude/Interest-based (ความถนัด)" : "Skill/Ability-based (ความสามารถ)"}
+${payload.mode === "interest" 
+  ? "- Prioritize grouping students with similar interests or complementary aptitudes." 
+  : "- Prioritize balancing technical skills across groups based on requiredSkills."}
 
 Rules:
 - Respect groupSize as much as possible.
-- Prioritize complementary skills based on requiredSkills.
-- Keep skill level balanced.
 - Output ONLY strict JSON, no markdown.
 
 Required output format:
@@ -329,7 +334,7 @@ Required output format:
     {
       "name": "A1",
       "memberUids": ["uid1", "uid2"],
-      "reason": "short Thai explanation"
+      "reason": "short Thai explanation based on ${payload.mode}"
     }
   ]
 }

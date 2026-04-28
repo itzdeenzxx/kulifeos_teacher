@@ -99,7 +99,7 @@ const ClassroomWork = () => {
       map.set(assignment.id, target.size);
     });
     return map;
-  }, [assignments, enrollments, membersByGroupId]);
+  }, [assignments, enrollments, membersByGroupId, groups.length]);
 
   const assignmentSubmissionStats = useMemo(() => {
     const byAssignment = new Map<string, number>();
@@ -246,9 +246,9 @@ const ClassroomWork = () => {
           </div>
 
           <Card className="rounded-2xl border-border/50">
-            <CardHeader className="flex-row items-center justify-between pb-3">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 gap-3">
               <CardTitle className="text-base">งานที่มอบหมาย</CardTitle>
-              <Button className="rounded-xl" onClick={() => setAssignmentOpen(true)} disabled={!teacherPolicy.canPublishAssignments}>
+              <Button className="rounded-xl w-full sm:w-auto" onClick={() => setAssignmentOpen(true)} disabled={!teacherPolicy.canPublishAssignments}>
                 <Send className="mr-2 h-4 w-4" /> เพิ่มงาน
               </Button>
             </CardHeader>
@@ -278,16 +278,18 @@ const ClassroomWork = () => {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="flex w-full items-center justify-between sm:justify-end gap-3">
-                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleExportGradesCSV(assignment.id, assignment.title)}>
-                            <Download className="mr-1 h-3.5 w-3.5" /> Export Excel
+                        <div className="flex w-full flex-wrap items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                          <Button size="sm" variant="ghost" className="h-8 px-2 text-[10px] sm:text-xs rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleExportGradesCSV(assignment.id, assignment.title)}>
+                            <Download className="mr-1 h-3 w-3 sm:h-3.5 sm:w-3.5" /> Export Excel
                           </Button>
-                          <Badge variant="secondary" className="border-0 bg-primary/10 text-primary">ส่งแล้ว {submittedCount}/{expectedCount}</Badge>
-                          {assignment.targetType === "group" && (
-                            <Link to={`/assignment/${assignment.id}/groups`}>
-                              <Button variant="outline" size="sm" className="h-7 px-2 text-xs rounded-md">ดูผล Group</Button>
-                            </Link>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="border-0 bg-primary/10 text-primary text-[10px] sm:text-xs">ส่งแล้ว {submittedCount}/{expectedCount}</Badge>
+                            {assignment.targetType === "group" && (
+                              <Link to={`/assignment/${assignment.id}/groups`}>
+                                <Button variant="outline" size="sm" className="h-8 px-2 text-[10px] sm:text-xs rounded-md">ดูผล Group</Button>
+                              </Link>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

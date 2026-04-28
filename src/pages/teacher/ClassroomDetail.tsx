@@ -25,6 +25,9 @@ import {
   TrendingUp,
   UserPlus,
   Download,
+  Edit2,
+  CheckCircle2,
+  Trash2
 } from "lucide-react";
 import {
   calculateClassroomProgress,
@@ -40,6 +43,9 @@ import {
   useGroupMembers,
   useSubmissionsByClassroom,
   useTeacherActivities,
+  deleteSingleGroup,
+  renameGroup,
+  setAssignmentGroupMember,
   type GroupingMode,
 } from "@/lib/db";
 import { ClassroomQRDialog } from "@/components/teacher/ClassroomQRDialog";
@@ -59,12 +65,17 @@ const groupingModeOptions: { value: GroupingMode; label: string; description: st
   {
     value: "skill",
     label: "ตามความสามารถ",
-    description: "กระจายนิสิตที่มีทักษะสูงให้สมดุลในแต่ละกลุ่ม",
+    description: "กระจายนิสิตที่มีทักษะสูงให้สมดุลในแต่ละกลุ่ม (Algorithm)",
   },
   {
     value: "interest",
     label: "ตามความถนัด",
-    description: "จัดทีมให้ทักษะและความสนใจครอบคลุมกันในแต่ละกลุ่ม",
+    description: "จัดทีมให้ทักษะและความสนใจครอบคลุมกันในแต่ละกลุ่ม (Algorithm)",
+  },
+  {
+    value: "ai",
+    label: "จัดกลุ่มโดย AI",
+    description: "ใช้ AI วิเคราะห์และจัดกลุ่มตามความเหมาะสมที่สุด",
   },
 ];
 
@@ -138,8 +149,11 @@ const ClassroomDetail = () => {
   const [reviewingSubmissionId, setReviewingSubmissionId] = useState<string>("");
   const [feedbackText, setFeedbackText] = useState("");
   const [scoreValue, setScoreValue] = useState("");
-  const [selectedStudentForProfile, setSelectedStudentForProfile] = useState<any>(null);
+  const [selectedStudentForProfile, setSelectedStudentForProfile] = useState<Record<string, unknown> | null>(null);
+  const [editMode, setEditMode] = useState(false);
   const teacherPolicy = useMemo(() => evaluateTeacherPolicy(userProfile), [userProfile]);
+
+
 
   const progress = useMemo(() => {
     return calculateClassroomProgress({
@@ -149,6 +163,12 @@ const ClassroomDetail = () => {
       groupMembers,
     });
   }, [assignments, submissions, enrollments, groupMembers]);
+
+
+  const unassignedStudents = useMemo(() => {
+    const defaultGroupMembers = groupMembers.filter(m => !m.assignmentId);
+    return enrollments.filter(e => !defaultGroupMembers.some(m => m.studentUid === e.studentUid));
+  }, [enrollments, groupMembers]);
 
   const assignmentSubmissionStats = useMemo(() => {
     const byAssignment = new Map<string, number>();
@@ -235,7 +255,7 @@ const ClassroomDetail = () => {
       members: Array<{
         memberId: string;
         memberName: string;
-        rawMember: any;
+        rawMember: Record<string, unknown>;
         statuses: Array<{ assignmentId: string; title: string; required: boolean; done: boolean }>;
       }>;
     }>();
@@ -480,19 +500,22 @@ const ClassroomDetail = () => {
 
     setGroupingLoading(true);
     try {
-      const aiResult = await generateAIGroupsWithTogether({
-        groupSize: Number(classroom.membersPerGroup || 4),
-        requiredSkills: classroom.requirements || [],
-        students: enrollments.map((enrollment) => {
-          const member = groupMembers.find((item) => item.studentUid === enrollment.studentUid);
-          return {
-            uid: enrollment.studentUid,
-            name: member?.studentName || enrollment.studentUid,
-            skills: member?.skills || [],
-            interests: member?.interests || [],
-          };
-        }),
-      });
+      let aiResult = null;
+      if (groupingMode === "ai") {
+        aiResult = await generateAIGroupsWithTogether({
+          groupSize: Number(classroom.membersPerGroup || 4),
+          requiredSkills: classroom.requirements || [],
+          students: enrollments.map((enrollment) => {
+            const member = groupMembers.find((item) => item.studentUid === enrollment.studentUid);
+            return {
+              uid: enrollment.studentUid,
+              name: member?.studentName || enrollment.studentUid,
+              skills: member?.skills || [],
+              interests: member?.interests || [],
+            };
+          }),
+        });
+      }
 
       const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser.email || "";
       const result = await generateClassroomGroups({
@@ -528,6 +551,50 @@ const ClassroomDetail = () => {
       toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
     } finally {
       setGroupingLoading(false);
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: string) => {
+    if (!confirm("คุณต้องการลบกลุ่มนี้ใช่หรือไม่? สมาชิกจะกลายเป็นผู้ที่ยังไม่ถูกจัดกลุ่ม")) return;
+    try {
+      if (!classroomId) return;
+      await deleteSingleGroup(groupId, classroomId);
+      toast({ title: "ลบกลุ่มสำเร็จ" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "ลบกลุ่มไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
+    }
+  };
+
+  const handleRenameGroup = async (groupId: string, currentName: string) => {
+    const newName = prompt("ชื่อกลุ่มใหม่:", currentName);
+    if (!newName || newName === currentName) return;
+    try {
+      await renameGroup(groupId, newName);
+      toast({ title: "เปลี่ยนชื่อกลุ่มสำเร็จ" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "เปลี่ยนชื่อไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
+    }
+  };
+
+  const handleGroupChange = async (studentUid: string, studentName: string, newGroupId: string) => {
+    const targetGroupId = newGroupId === "unassigned" ? null : newGroupId;
+    const targetGroupName = targetGroupId ? groups.find(g => g.id === targetGroupId)?.name : null;
+    
+    try {
+      await setAssignmentGroupMember({
+        classroomId: classroomId!,
+        assignmentId: null,
+        studentUid,
+        studentName,
+        newGroupId: targetGroupId,
+        newGroupName: targetGroupName
+      });
+      toast({ title: "ย้ายสมาชิกสำเร็จ" });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "ย้ายไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: msg, variant: "destructive" });
     }
   };
 
@@ -746,14 +813,14 @@ const ClassroomDetail = () => {
                   <Link to={`/classroom/${classroomId}/people`} className="rounded-full bg-white/15 px-3 py-1 hover:bg-white/20 transition-colors">ผู้คน</Link>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                <Button variant="secondary" className="rounded-xl flex-1 md:flex-none" onClick={() => setQrOpen(true)}>
-                  <QrCode className="h-4 w-4 mr-1" /> QR / ลิงก์
+              <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                <Button variant="secondary" className="rounded-xl flex-1 md:flex-none h-9 text-xs" onClick={() => setQrOpen(true)}>
+                  <QrCode className="h-3.5 w-3.5 mr-1" /> QR / ลิงก์
                 </Button>
-                <Button variant="secondary" className="rounded-xl flex-1 md:flex-none" onClick={() => setUidInviteOpen(true)}>
-                  <UserPlus className="h-4 w-4 mr-1" /> เพิ่มด้วย UID
+                <Button variant="secondary" className="rounded-xl flex-1 md:flex-none h-9 text-xs" onClick={() => setUidInviteOpen(true)}>
+                  <UserPlus className="h-3.5 w-3.5 mr-1" /> เพิ่ม UID
                 </Button>
-                <Button variant="secondary" className="rounded-xl flex-1 md:flex-none" onClick={() => setWizardOpen(true)}>
+                <Button variant="secondary" className="rounded-xl w-full md:w-auto h-9 text-xs" onClick={() => setWizardOpen(true)}>
                   มอบหมายงาน / จัดกลุ่ม
                 </Button>
               </div>
@@ -911,17 +978,20 @@ const ClassroomDetail = () => {
 
             <TabsContent value="groups" className="space-y-4 mt-4">
               <Card className="rounded-2xl border-border/50">
-                <CardHeader className="flex-row items-center justify-between">
+                <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <CardTitle className="text-base inline-flex items-center gap-2"><Brain className="h-4 w-4" /> จัดการกลุ่ม</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="h-9 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl" onClick={handleExportGroupsCSV} disabled={groups.length === 0}>
-                      <Download className="mr-1 h-4 w-4" /> Export CSV
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="ghost" size="sm" className="h-9 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl px-2 sm:px-3 text-xs" onClick={handleExportGroupsCSV} disabled={groups.length === 0}>
+                      <Download className="mr-1 h-3.5 w-3.5" /> Export
                     </Button>
-                    <Button variant="outline" className="rounded-xl" onClick={() => setClassroomSetupOpen(true)}>
-                      ตั้งค่า Members/Skills
+                    <Button variant={editMode ? "default" : "outline"} size="sm" className="rounded-xl h-9 text-xs" onClick={() => setEditMode(!editMode)}>
+                      {editMode ? <><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> เสร็จสิ้น</> : <><Edit2 className="mr-1.5 h-3.5 w-3.5" /> แก้ไข</>}
+                    </Button>
+                    <Button variant="outline" size="sm" className="rounded-xl h-9 text-xs" onClick={() => setClassroomSetupOpen(true)}>
+                      ตั้งค่า
                     </Button>
                     <Select value={groupingMode} onValueChange={(value: GroupingMode) => setGroupingMode(value)}>
-                      <SelectTrigger className="w-48 rounded-xl h-9">
+                      <SelectTrigger className="w-full sm:w-32 rounded-xl h-9 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -930,11 +1000,11 @@ const ClassroomDetail = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button variant="destructive" className="rounded-xl" onClick={handleClearGroups} disabled={groupingLoading || !teacherPolicy.canGenerateGroups || groups.length === 0}>
-                      ลบกลุ่มทั้งหมด
+                    <Button variant="destructive" size="sm" className="rounded-xl h-9 text-xs flex-1 sm:flex-none" onClick={handleClearGroups} disabled={groupingLoading || !teacherPolicy.canGenerateGroups || groups.length === 0}>
+                      ลบกลุ่ม
                     </Button>
-                    <Button className="rounded-xl" onClick={handleGenerateGroups} disabled={groupingLoading || !teacherPolicy.canGenerateGroups}>
-                      {groupingLoading ? "กำลังดำเนินการ..." : "จัดกลุ่มอัตโนมัติ"}
+                    <Button size="sm" className="rounded-xl h-9 text-xs flex-1 sm:flex-none" onClick={handleGenerateGroups} disabled={groupingLoading || !teacherPolicy.canGenerateGroups}>
+                      {groupingLoading ? "..." : "จัดอัตโนมัติ"}
                     </Button>
                   </div>
                 </CardHeader>
@@ -964,9 +1034,26 @@ const ClassroomDetail = () => {
                   return (
                     <Card key={group.id} className="rounded-2xl border-border/50">
                       <CardHeader>
-                        <CardTitle className="text-base flex items-center justify-between">
-                          <span>{group.name}</span>
-                          <Badge variant="secondary" className="border-0">{members.length} คน</Badge>
+                        <CardTitle className="text-base flex items-center justify-between w-full">
+                          <div className="flex items-center gap-2">
+                            <span 
+                              className="cursor-pointer hover:text-primary transition-colors"
+                              onClick={() => handleRenameGroup(group.id, group.name)}
+                            >
+                              {group.name}
+                            </span>
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
+                              {members.length} คน
+                            </Badge>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                            onClick={() => handleDeleteGroup(group.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-3">
@@ -977,16 +1064,33 @@ const ClassroomDetail = () => {
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {members.map((member) => (
-                            <button 
-                              key={member.id} 
-                              onClick={() => setSelectedStudentForProfile({ ...member, groupName: group.name })}
-                              className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-card pr-3 p-1 text-sm font-medium transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                            >
-                              <Avatar className="h-6 w-6">
-                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{member.studentName.slice(0, 2)}</AvatarFallback>
-                              </Avatar>
-                              {member.studentName}
-                            </button>
+                            <div key={member.id} className="flex items-center gap-2">
+                              <button 
+                                onClick={() => setSelectedStudentForProfile({ ...member, groupName: group.name })}
+                                className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-card pr-3 p-1 text-sm font-medium transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                              >
+                                <Avatar className="h-6 w-6">
+                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{member.studentName.slice(0, 2)}</AvatarFallback>
+                                </Avatar>
+                                {member.studentName}
+                              </button>
+                              {editMode && (
+                                <Select 
+                                  value={group.id} 
+                                  onValueChange={(val) => handleGroupChange(member.studentUid, member.studentName, val)}
+                                >
+                                  <SelectTrigger className="w-[120px] h-8 text-xs bg-white rounded-xl">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {groups.map(g => (
+                                      <SelectItem key={g.id} value={g.id} className="text-xs">{g.name}</SelectItem>
+                                    ))}
+                                    <SelectItem value="unassigned" className="text-xs text-red-600">นำออกจากกลุ่ม</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
                           ))}
                         </div>
                       </CardContent>
@@ -994,6 +1098,43 @@ const ClassroomDetail = () => {
                   );
                 })}
               </div>
+
+              {editMode && unassignedStudents.length > 0 && (
+                <Card className="rounded-2xl border-border/50 bg-amber-50/50 mt-4">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base text-amber-800">นิสิตที่ยังไม่มีกลุ่ม ({unassignedStudents.length} คน)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-3">
+                      {unassignedStudents.map(student => {
+                        const fromGroup = groupMembers.find(m => m.studentUid === student.studentUid);
+                        const studentName = fromGroup?.studentName || student.studentUid;
+                        return (
+                          <div key={student.id || student.studentUid} className="flex items-center gap-2 rounded-lg bg-white/60 p-2 pr-3 border border-amber-200 shadow-sm">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback className="text-[10px] bg-amber-100 text-amber-700">{studentName.slice(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium text-amber-900">{studentName}</span>
+                            <Select 
+                              value="unassigned" 
+                              onValueChange={(val) => handleGroupChange(student.studentUid, studentName, val)}
+                            >
+                              <SelectTrigger className="w-[120px] h-7 text-xs bg-white rounded-xl">
+                                <SelectValue placeholder="เลือกกลุ่ม" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {groups.map(g => (
+                                  <SelectItem key={g.id} value={g.id} className="text-xs">{g.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="people" className="space-y-4 mt-4">

@@ -11,8 +11,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, UserPlus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { inviteStudentsByUid, useClassroomEnrollments, useGroupMembers, useTeacherActivities, injectMockStudentsWithSkills } from "@/lib/db";
+import { inviteStudentsByUid, useClassroomEnrollments, useGroupMembers, useTeacherActivities, injectMockStudentsWithSkills, useAssignmentsByClassroom, useSubmissionsByClassroom } from "@/lib/db";
 import { evaluateTeacherPolicy } from "@/lib/teacherPolicy";
+import { Clock, CheckCircle2, XCircle } from "lucide-react";
 
 const ClassroomPeople = () => {
   const { classroomId } = useParams();
@@ -22,10 +23,15 @@ const ClassroomPeople = () => {
   const classroom = teacherActivities.find((item) => String(item.id) === String(classroomId));
   const { data: enrollments = [] } = useClassroomEnrollments(classroomId);
   const { data: groupMembers = [] } = useGroupMembers(classroomId);
+  const { data: assignments = [] } = useAssignmentsByClassroom(classroomId);
+  const { data: submissions = [] } = useSubmissionsByClassroom(classroomId);
 
   const [uidInviteOpen, setUidInviteOpen] = useState(false);
   const [uidInput, setUidInput] = useState("");
   const [inviting, setInviting] = useState(false);
+
+  const [studentWorkOpen, setStudentWorkOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<{uid: string, name: string} | null>(null);
 
   const handleInviteByUid = async () => {
     if (!authUser?.uid || !classroomId) return;
@@ -135,7 +141,15 @@ const ClassroomPeople = () => {
                         <p className="text-xs text-muted-foreground">source: {enrollment.source}</p>
                       </div>
                     </div>
-                    {groupName && <Badge variant="secondary" className="border-0">{groupName}</Badge>}
+                    <div className="flex items-center gap-2">
+                      {groupName && <Badge variant="secondary" className="border-0">{groupName}</Badge>}
+                      <Button variant="outline" size="sm" className="rounded-xl" onClick={() => {
+                        setSelectedStudent({uid: enrollment.studentUid, name: fromGroup?.studentName || enrollment.studentUid});
+                        setStudentWorkOpen(true);
+                      }}>
+                        ดูสถานะงาน
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
@@ -160,6 +174,69 @@ const ClassroomPeople = () => {
             <Button className="w-full rounded-xl" onClick={handleInviteByUid} disabled={inviting}>
               {inviting ? "กำลังเพิ่มรายชื่อ..." : "เพิ่มนิสิตทันที"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={studentWorkOpen} onOpenChange={setStudentWorkOpen}>
+        <DialogContent className="rounded-2xl sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>สถานะการส่งงาน: {selectedStudent?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            {assignments.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center">ยังไม่มีการมอบหมายงานในชั้นเรียนนี้</p>
+            ) : (
+              assignments.map(assignment => {
+                const groupMember = groupMembers.find(m => m.studentUid === selectedStudent?.uid);
+                
+                // ตรวจสอบว่านิสิตคนนี้ต้องส่งงานนี้ไหม
+                let isTarget = false;
+                if (assignment.targetType === "classroom") isTarget = true;
+                else if (assignment.targetType === "individual" && assignment.targetIds?.includes(selectedStudent?.uid || "")) isTarget = true;
+                else if (assignment.targetType === "group") {
+                  if (!assignment.targetIds || assignment.targetIds.length === 0) isTarget = true;
+                  else if (groupMember && assignment.targetIds.includes(groupMember.groupId)) isTarget = true;
+                }
+
+                if (!isTarget) return null;
+
+                // หาสถานะการส่ง
+                let submission = null;
+                if (assignment.targetType === "group" && groupMember) {
+                  submission = submissions.find(s => s.assignmentId === assignment.id && s.groupId === groupMember.groupId);
+                } else {
+                  submission = submissions.find(s => s.assignmentId === assignment.id && s.studentUid === selectedStudent?.uid);
+                }
+
+                const isLate = assignment.dueDate && Date.now() > Date.parse(assignment.dueDate) && !submission;
+                const dueDateStr = assignment.dueDate ? new Date(Date.parse(assignment.dueDate)).toLocaleDateString("th-TH") : "ไม่มีกำหนด";
+
+                return (
+                  <div key={assignment.id} className="flex items-center justify-between rounded-xl border border-border/50 p-3">
+                    <div>
+                      <p className="font-medium text-sm">{assignment.title}</p>
+                      <p className="text-xs text-muted-foreground">กำหนดส่ง: {dueDateStr}</p>
+                    </div>
+                    <div>
+                      {submission ? (
+                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">
+                          <CheckCircle2 className="mr-1 h-3 w-3" /> ส่งแล้ว
+                        </Badge>
+                      ) : isLate ? (
+                        <Badge className="bg-red-100 text-red-800 border-red-200">
+                          <XCircle className="mr-1 h-3 w-3" /> ส่งช้า / ขาดส่ง
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-slate-600">
+                          <Clock className="mr-1 h-3 w-3" /> รอส่ง
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </DialogContent>
       </Dialog>
