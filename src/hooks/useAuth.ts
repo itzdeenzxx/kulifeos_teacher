@@ -83,9 +83,8 @@ export function useAuth() {
             setUserProfile(data);
             localStorage.setItem("ku_current_user_id", user.uid);
           } else {
-            setError("User profile not found");
-            await signOut(auth);
-            navigate("/auth");
+            console.warn("User auth exists but Firestore profile not found. Waiting for profile to be created.");
+            setUserProfile(null);
           }
         } else {
           globalCachedProfile = null;

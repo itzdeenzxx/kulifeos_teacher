@@ -29,8 +29,13 @@ const Auth = () => {
   
   useEffect(() => {
     if (userProfile && !authLoading) {
-      if (userProfile.onboardingStep >= 4) {
-        navigate("/dashboard", { replace: true });
+      if (userProfile.role !== "teacher") {
+        signOut(auth);
+        setError("บัญชีนี้ถูกลงทะเบียนเป็นนิสิต กรุณาใช้งานผ่านแอปพลิเคชันสำหรับนิสิต");
+        return;
+      }
+      if (userProfile.onboardingStep >= 1) {
+        navigate("/", { replace: true });
       } else {
         navigate("/onboarding", { replace: true });
       }
@@ -64,9 +69,9 @@ const Auth = () => {
         }
         
         if (userData.onboardingStep >= 1) {
-          navigate("/");
+          window.location.href = "/";
         } else {
-          navigate("/onboarding");
+          window.location.href = "/onboarding";
         }
       } else {
         // Teacher doesn't exist, create a new record
@@ -80,7 +85,7 @@ const Auth = () => {
           updatedAt: Date.now(),
         };
         await setDoc(userRef, newUser);
-        navigate("/onboarding");
+        window.location.href = "/onboarding";
       }
     } catch (err: any) {
       console.error("Login failed:", err);
@@ -112,7 +117,7 @@ const Auth = () => {
           updatedAt: Date.now(),
         });
       }
-      navigate("/");
+      window.location.href = "/";
     } catch (err: any) {
       console.error(err);
       setError("เกิดข้อผิดพลาดในการเข้าสู่ผู้เยี่ยมชม");
