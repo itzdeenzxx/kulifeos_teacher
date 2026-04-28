@@ -139,6 +139,7 @@ const ClassroomWork = () => {
 
     setAssignmentSubmitting(true);
     try {
+      const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser.email || "";
       await createAssignment({
         classroomId,
         title: assignmentForm.title,
@@ -149,7 +150,7 @@ const ClassroomWork = () => {
         allowTextLink: assignmentForm.allowTextLink,
         allowFileUpload: assignmentForm.allowFileUpload,
         createdByUid: authUser.uid,
-      });
+      }, { classroomName: classroom?.name, actorName: teacherName });
       toast({ title: "สร้างงานสำเร็จ" });
       setAssignmentForm({
         title: "",
@@ -169,7 +170,12 @@ const ClassroomWork = () => {
 
   const handleUpdateAssignmentType = async (assignmentId: string, targetType: "classroom" | "group" | "individual") => {
     try {
-      await updateAssignmentTargetType({ assignmentId, targetType });
+      const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser?.email || "";
+      await updateAssignmentTargetType({
+        assignmentId,
+        targetType,
+        meta: { actorUid: authUser?.uid, actorName: teacherName, classroomId, classroomName: classroom?.name },
+      });
       toast({ title: "อัปเดตประเภทงานแล้ว" });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "อัปเดตไม่สำเร็จ";

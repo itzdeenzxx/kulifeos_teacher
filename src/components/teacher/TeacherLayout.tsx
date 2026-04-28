@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Settings, LogOut, GraduationCap } from "lucide-react";
+import { LayoutDashboard, Settings, LogOut, GraduationCap, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { NavLink } from "@/components/NavLink";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -114,9 +114,17 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
         </div>
       </header>
 
-      {profile?.verificationStatus === "unverified-non-ku" && (
+      {profile?.verificationStatus === "unverified-non-ku" && !profile?.isGuest && (
         <div className="mx-4 mt-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 md:mx-8">
           บัญชีอาจารย์ยังไม่ยืนยันตัวตน นิสิตจะเห็นสถานะนี้เพื่อความปลอดภัย
+        </div>
+      )}
+
+      {profile?.isGuest && (
+        <div className="mx-4 mt-2 flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary md:mx-8">
+          <Sparkles className="h-4 w-4" />
+          <span className="font-medium">โหมดผู้เยี่ยมชม (Guest Mode):</span>
+          <span>คุณสามารถทดลองสร้างข้อมูลและดูฟังก์ชันต่างๆ ได้ แต่ข้อมูลจะไม่ถูกบันทึกอย่างถาวรและไม่สามารถใช้งานร่วมกับนิสิตจริงได้</span>
         </div>
       )}
 

@@ -109,16 +109,11 @@ export function useAuth() {
             setUserProfile(data);
             localStorage.setItem("ku_current_user_id", user.uid);
           } else {
-<<<<<<< HEAD
-            console.warn("User auth exists but Firestore profile not found. Waiting for profile to be created.");
-            setUserProfile(null);
-=======
             const fallback = createFallbackProfile(user);
             globalCachedProfile = { uid: user.uid, profile: fallback };
             setUserProfile(fallback);
             localStorage.setItem(`ku_profile_${user.uid}`, JSON.stringify(fallback));
             localStorage.setItem("ku_current_user_id", user.uid);
->>>>>>> d4904f5ef0e6ae453e47054cd4a6263a00d1ea02
           }
         } else {
           globalCachedProfile = null;

@@ -1,4 +1,4 @@
-﻿import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import { PageTransition } from "@/components/MotionWrappers";
@@ -320,22 +320,26 @@ const ClassroomDetail = () => {
       .filter(Boolean);
 
     if (parsedUids.length === 0) {
-      toast({ title: "UID Required", description: "Please provide at least 1 UID.", variant: "destructive" });
+      toast({ title: "ต้องระบุ UID", description: "กรุณาใส่ UID อย่างน้อย 1 รายการ", variant: "destructive" });
       return;
     }
 
     setInviting(true);
     try {
-      const result = await inviteStudentsByUid(classroomId, authUser.uid, parsedUids);
+      const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser.email || "";
+      const result = await inviteStudentsByUid(classroomId, authUser.uid, parsedUids, {
+        classroomName: classroom?.name,
+        actorName: teacherName,
+      });
       toast({
-        title: "Students Added",
-        description: `Added ${result.created} students, skipped ${result.skipped} duplicates.`,
+        title: "เพิ่มนิสิตสำเร็จ",
+        description: `เพิ่ม ${result.created} คน (ข้าม ${result.skipped} ซ้ำ)`,
       });
       setUidInput("");
       setUidInviteOpen(false);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unable to add students.";
-      toast({ title: "Add Failed", description: message, variant: "destructive" });
+      const message = error instanceof Error ? error.message : "เพิ่มนิสิตไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
     } finally {
       setInviting(false);
     }
@@ -345,18 +349,19 @@ const ClassroomDetail = () => {
     if (!authUser?.uid || !classroomId) return;
     if (!teacherPolicy.canPublishAssignments) {
       toast({
-        title: "ยัง publish งานไม่ได้",
-        description: "ยืนยันตัวตนอาจารย์ก่อน จึงจะเผยแพร่ assignment ได้",
+        title: "ยังสร้างงานไม่ได้",
+        description: "ยืนยันตัวตนอาจารย์ก่อน จึงจะเผยแพร่งานได้",
         variant: "destructive",
       });
       return;
     }
     if (!assignmentForm.title.trim() || !assignmentForm.dueDate) {
-      toast({ title: "Incomplete Form", description: "Please provide assignment title and due date.", variant: "destructive" });
+      toast({ title: "ข้อมูลไม่ครบ", description: "กรุณาระบุชื่องานและวันครบกำหนด", variant: "destructive" });
       return;
     }
     setAssignmentSubmitting(true);
     try {
+      const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser.email || "";
       await createAssignment({
         classroomId,
         title: assignmentForm.title,
@@ -367,19 +372,13 @@ const ClassroomDetail = () => {
         allowTextLink: assignmentForm.allowTextLink,
         allowFileUpload: assignmentForm.allowFileUpload,
         createdByUid: authUser.uid,
-      });
-      toast({ title: "Assignment Created", description: assignmentForm.title });
-      setAssignmentForm({
-        title: "",
-        description: "",
-        dueDate: "",
-        allowTextLink: true,
-        allowFileUpload: true,
-      });
+      }, { classroomName: classroom?.name, actorName: teacherName });
+      toast({ title: "สร้างงานสำเร็จ", description: assignmentForm.title });
+      setAssignmentForm({ title: "", description: "", dueDate: "", allowTextLink: true, allowFileUpload: true });
       setAssignmentOpen(false);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unable to create assignment.";
-      toast({ title: "Create Failed", description: message, variant: "destructive" });
+      const message = error instanceof Error ? error.message : "สร้างงานไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
     } finally {
       setAssignmentSubmitting(false);
     }
@@ -387,8 +386,13 @@ const ClassroomDetail = () => {
 
   const handleUpdateAssignmentType = async (assignmentId: string, targetType: "classroom" | "group" | "individual") => {
     try {
-      await updateAssignmentTargetType({ assignmentId, targetType });
-      toast({ title: "อัปเดตประเภทงานแล้ว" });
+      const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser?.email || "";
+      await updateAssignmentTargetType({
+        assignmentId,
+        targetType,
+        meta: { actorUid: authUser?.uid, actorName: teacherName, classroomId, classroomName: classroom?.name },
+      });
+      toast({ title: "อัปเดตประเภทงานแล้ว", description: `เปลี่ยนเป็น ${targetType === "classroom" ? "ทั้งห้อง" : targetType === "group" ? "งานกลุ่ม" : "งานเดี่ยว"}` });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "อัปเดตไม่สำเร็จ";
       toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
@@ -442,6 +446,7 @@ const ClassroomDetail = () => {
         }),
       });
 
+      const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser.email || "";
       const result = await generateClassroomGroups({
         classroomId,
         teacherUid: authUser.uid,
@@ -449,14 +454,15 @@ const ClassroomDetail = () => {
         membersPerGroup: Number(classroom.membersPerGroup || 4),
         requiredSkills: classroom.requirements || [],
         aiSuggestedGroups: aiResult?.groups,
+        meta: { classroomName: classroom?.name, actorName: teacherName },
       });
       toast({
-        title: "Groups Generated",
-        description: `Created ${result.groupCount} groups, covering ${result.memberCount} students.`,
+        title: "จัดกลุ่มสำเร็จ",
+        description: `สร้าง ${result.groupCount} กลุ่ม ครอบคลุม ${result.memberCount} นิสิต`,
       });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unable to generate groups.";
-      toast({ title: "Grouping Failed", description: message, variant: "destructive" });
+      const message = error instanceof Error ? error.message : "จัดกลุ่มไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
     } finally {
       setGroupingLoading(false);
     }
@@ -505,6 +511,19 @@ const ClassroomDetail = () => {
         requirements: requiredSkills,
         updatedAt: Date.now(),
       });
+
+      if (authUser?.uid) {
+        const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser.email || "";
+        void writeAuditLog({
+          action: "save_classroom_setup",
+          actorUid: authUser.uid,
+          actorName: teacherName,
+          classroomId,
+          classroomName: classroom?.name,
+          detail: `ตั้งค่า ${numericMembers} คนต่อกลุ่ม, ทักษะ: ${requiredSkills.join(", ") || "-"}`,
+        });
+      }
+
       toast({ title: "บันทึกการตั้งค่าห้องเรียนแล้ว" });
       setClassroomSetupOpen(false);
     } catch (error: unknown) {
@@ -549,6 +568,7 @@ const ClassroomDetail = () => {
         updatedAt: Date.now(),
       });
 
+      const wizardTeacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser.email || "";
       await createAssignment({
         classroomId,
         title: wizardForm.assignmentTitle,
@@ -559,7 +579,7 @@ const ClassroomDetail = () => {
         allowTextLink: true,
         allowFileUpload: true,
         createdByUid: authUser.uid,
-      });
+      }, { classroomName: classroom?.name, actorName: wizardTeacherName });
 
       if (wizardForm.workMode === "group" && enrollments.length > 0 && teacherPolicy.canGenerateGroups) {
         const aiResult = await generateAIGroupsWithTogether({
@@ -576,6 +596,7 @@ const ClassroomDetail = () => {
           }),
         });
 
+        const tName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser.email || "";
         await generateClassroomGroups({
           classroomId,
           teacherUid: authUser.uid,
@@ -583,6 +604,7 @@ const ClassroomDetail = () => {
           membersPerGroup: numericMembers,
           requiredSkills: wizardForm.requiredSkills,
           aiSuggestedGroups: aiResult?.groups,
+          meta: { classroomName: classroom?.name, actorName: tName },
         });
       }
 
@@ -616,23 +638,29 @@ const ClassroomDetail = () => {
 
     const normalizedScore = scoreValue.trim();
     if (!/^\d+(\.\d+)?$/.test(normalizedScore)) {
-      toast({ title: "Invalid Score", description: "Score must be numeric (0-100).", variant: "destructive" });
+      toast({ title: "คะแนนไม่ถูกต้อง", description: "กรุณากรอกคะแนนเป็นตัวเลข (0–100)", variant: "destructive" });
       return;
     }
     const numericScore = Number(normalizedScore);
     if (numericScore < 0 || numericScore > 100) {
-      toast({ title: "Invalid Score", description: "Score must be between 0 and 100.", variant: "destructive" });
+      toast({ title: "คะแนนไม่ถูกต้อง", description: "คะแนนต้องอยู่ระหว่าง 0–100", variant: "destructive" });
       return;
     }
     try {
-      await upsertSubmissionFeedback(reviewingSubmissionId, feedbackText, numericScore);
-      toast({ title: "Feedback Saved" });
+      const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser?.email || "";
+      await upsertSubmissionFeedback(reviewingSubmissionId, feedbackText, numericScore, {
+        actorUid: authUser?.uid,
+        actorName: teacherName,
+        classroomId: classroomId,
+        classroomName: classroom?.name,
+      });
+      toast({ title: "บันทึก Feedback สำเร็จ" });
       setReviewingSubmissionId("");
       setFeedbackText("");
       setScoreValue("");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unable to save feedback.";
-      toast({ title: "Save Failed", description: message, variant: "destructive" });
+      const message = error instanceof Error ? error.message : "บันทึก feedback ไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
     }
   };
 
@@ -644,26 +672,26 @@ const ClassroomDetail = () => {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <Link to="/" className="inline-flex items-center text-sm opacity-90 hover:opacity-100 mb-2">
-                  <ArrowLeft className="h-4 w-4 mr-1" /> Back
+                  <ArrowLeft className="h-4 w-4 mr-1" /> กลับ
                 </Link>
                 <h1 className="text-2xl md:text-4xl font-bold">{classroom.name}</h1>
-                <p className="mt-2 text-primary-foreground/85">Class code: {classCode}</p>
-                <p className="text-primary-foreground/85">Students {enrollments.length} • Groups {groups.length}</p>
+                <p className="mt-2 text-primary-foreground/85">รหัสห้อง: {classCode}</p>
+                <p className="text-primary-foreground/85">นิสิต {enrollments.length} คน · กลุ่ม {groups.length} กลุ่ม</p>
                 <div className="mt-3 flex gap-2 text-sm">
-                  <span className="rounded-full bg-white px-3 py-1 font-medium text-primary">Stream</span>
-                  <Link to={`/classroom/${classroomId}/work`} className="rounded-full bg-white/15 px-3 py-1">Work</Link>
-                  <Link to={`/classroom/${classroomId}/people`} className="rounded-full bg-white/15 px-3 py-1">People</Link>
+                  <span className="rounded-full bg-white px-3 py-1 font-medium text-primary">กระแสข่าว</span>
+                  <Link to={`/classroom/${classroomId}/work`} className="rounded-full bg-white/15 px-3 py-1">งาน</Link>
+                  <Link to={`/classroom/${classroomId}/people`} className="rounded-full bg-white/15 px-3 py-1">สมาชิก</Link>
                 </div>
               </div>
               <div className="flex gap-2">
                 <Button variant="secondary" className="rounded-xl" onClick={() => setQrOpen(true)}>
-                  <QrCode className="h-4 w-4 mr-1" /> QR / Link
+                  <QrCode className="h-4 w-4 mr-1" /> QR / ลิงก์
                 </Button>
                 <Button variant="secondary" className="rounded-xl" onClick={() => setUidInviteOpen(true)}>
-                  <UserPlus className="h-4 w-4 mr-1" /> Add by UID
+                  <UserPlus className="h-4 w-4 mr-1" /> เพิ่มด้วย UID
                 </Button>
                 <Button variant="secondary" className="rounded-xl" onClick={() => setWizardOpen(true)}>
-                  Setup Wizard
+                  ตั้งค่าด่วน
                 </Button>
               </div>
             </div>
@@ -695,7 +723,7 @@ const ClassroomDetail = () => {
               <div className="grid gap-3 md:grid-cols-4">
                 <Card className="rounded-2xl border-border/50">
                   <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">Overall Completion</p>
+                    <p className="text-xs text-muted-foreground">ความคืบหน้ารวม</p>
                     <p className="text-2xl font-bold mt-1">{progress.completionPercent}%</p>
                     <Progress className="mt-2 h-2" value={progress.completionPercent} />
                   </CardContent>
@@ -758,11 +786,11 @@ const ClassroomDetail = () => {
                 <CardHeader className="flex-row items-center justify-between">
                   <CardTitle className="text-base inline-flex items-center gap-2"><FolderKanban className="h-4 w-4" /> Assignment + Submission</CardTitle>
                   <Button className="rounded-xl" onClick={() => setAssignmentOpen(true)} disabled={!teacherPolicy.canPublishAssignments}>
-                    <Send className="h-4 w-4 mr-2" /> Create Assignment
+                    <Send className="h-4 w-4 mr-2" /> สร้างงาน
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {assignments.length === 0 && <p className="text-sm text-muted-foreground">No assignments yet.</p>}
+                  {assignments.length === 0 && <p className="text-sm text-muted-foreground">ยังไม่มีงาน</p>}
                   {assignments.map((assignment) => {
                     const submittedCount = assignmentSubmissionStats.get(assignment.id) || 0;
                     const expectedCount = expectedRecipientsByAssignment.get(assignment.id) || 0;
@@ -796,11 +824,11 @@ const ClassroomDetail = () => {
                           </div>
                           <div className="text-right">
                             <Badge variant={isOverdue ? "destructive" : "secondary"} className="mb-2 border-0">
-                              Submitted {submittedCount}/{expectedCount}
+                              ส่งแล้ว {submittedCount}/{expectedCount}
                             </Badge>
                             <div>
                               <Button size="sm" variant="outline" className="rounded-lg" onClick={() => openReviewDialog(assignment.id)}>
-                                Review / Feedback
+                                ตรวจงาน / Feedback
                               </Button>
                             </div>
                           </div>
@@ -816,11 +844,11 @@ const ClassroomDetail = () => {
                   <CardTitle className="text-base">Contribution by Member</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {progress.contribution.length === 0 && <p className="text-sm text-muted-foreground">No submissions yet.</p>}
+                  {progress.contribution.length === 0 && <p className="text-sm text-muted-foreground">ยังไม่มีการส่งงาน</p>}
                   {progress.contribution.map((item) => (
                     <div key={item.studentUid} className="flex items-center justify-between rounded-lg border border-border/40 p-2">
                       <span className="text-sm">{item.studentName}</span>
-                      <Badge className="bg-primary/10 text-primary border-0">{item.count} submissions</Badge>
+                      <Badge className="bg-primary/10 text-primary border-0">{item.count} ครั้ง</Badge>
                     </div>
                   ))}
                 </CardContent>
@@ -832,7 +860,7 @@ const ClassroomDetail = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {memberStatusMatrix.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No grouped members yet.</p>
+                    <p className="text-sm text-muted-foreground">ยังไม่มีสมาชิกที่จัดกลุ่มแล้ว</p>
                   )}
 
                   {memberStatusMatrix.map((group) => (
@@ -913,7 +941,7 @@ const ClassroomDetail = () => {
               <div className="grid md:grid-cols-2 gap-4">
                 {progress.groupProgress.length === 0 && groups.length === 0 && (
                   <Card className="rounded-2xl border-dashed col-span-2">
-                    <CardContent className="p-8 text-center text-sm text-muted-foreground">No groups yet.</CardContent>
+                    <CardContent className="p-8 text-center text-sm text-muted-foreground">ยังไม่มีกลุ่ม</CardContent>
                   </Card>
                 )}
 
@@ -957,7 +985,7 @@ const ClassroomDetail = () => {
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {enrollments.length === 0 && <p className="text-sm text-muted-foreground">No students enrolled yet.</p>}
+                  {enrollments.length === 0 && <p className="text-sm text-muted-foreground">ยังไม่มีนิสิตในห้องเรียน</p>}
                   {enrollments.map((enrollment) => {
                     const fromGroup = groupMembers.find((member) => member.studentUid === enrollment.studentUid);
                     const groupName = (fromGroup as unknown as { groupName?: string } | undefined)?.groupName;
@@ -997,8 +1025,8 @@ const ClassroomDetail = () => {
       <Dialog open={uidInviteOpen} onOpenChange={setUidInviteOpen}>
         <DialogContent className="rounded-2xl sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add Students by UID</DialogTitle>
-            <DialogDescription>Students are enrolled immediately. Separate UIDs by space, comma, or newline.</DialogDescription>
+            <DialogTitle>เพิ่มนิสิตด้วย UID</DialogTitle>
+            <DialogDescription>นิสิตจะถูกเพิ่มทันที คั่น UID ด้วยเว้นวรรค จุลภาค หรือขึ้นบรรทัดใหม่</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <Input
@@ -1272,12 +1300,12 @@ const ClassroomDetail = () => {
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
         <DialogContent className="rounded-2xl sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Review & Feedback</DialogTitle>
-            <DialogDescription>Select a submission and provide feedback with score.</DialogDescription>
+            <DialogTitle>ตรวจงาน & Feedback</DialogTitle>
+            <DialogDescription>เลือกงานที่ส่งแล้วและให้ feedback พร้อมคะแนน</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {selectedAssignmentSubmissions.length === 0 && (
-              <p className="text-sm text-muted-foreground">No submissions for this assignment yet.</p>
+              <p className="text-sm text-muted-foreground">ยังไม่มีการส่งงานสำหรับงานนี้</p>
             )}
 
             {selectedAssignmentSubmissions.map((submission) => (
@@ -1302,7 +1330,7 @@ const ClassroomDetail = () => {
                     className="rounded-lg"
                     onClick={() => startReviewSubmission(submission.id, submission.feedback, submission.score)}
                   >
-                    Select for review
+                    เลือกตรวจงาน
                   </Button>
                 </div>
                 {submission.contentText && <p className="text-xs text-muted-foreground">{submission.contentText}</p>}
@@ -1322,11 +1350,11 @@ const ClassroomDetail = () => {
             {reviewingSubmissionId && (
               <div className="rounded-xl border border-border/50 p-3 space-y-2">
                 <Label>Feedback</Label>
-                <Textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} placeholder="Give improvement guidance" />
-                <Label>Score</Label>
-                <Input value={scoreValue} onChange={(e) => setScoreValue(e.target.value)} placeholder="e.g. 85" />
+                <Textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} placeholder="ให้คำแนะนำการปรับปรุง" />
+                <Label>คะแนน (0–100)</Label>
+                <Input value={scoreValue} onChange={(e) => setScoreValue(e.target.value)} placeholder="เช่น 85" />
                 <Button className="rounded-xl w-full" onClick={handleSubmitReview}>
-                  Save Feedback
+                  บันทึก Feedback
                 </Button>
               </div>
             )}

@@ -4,6 +4,67 @@ import { db } from "./firebase";
 import { useAuth } from "@/hooks/useAuth";
 import { evaluateTeacherPolicy } from "@/lib/teacherPolicy";
 
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+export type AuditAction =
+  | "create_assignment"
+  | "generate_groups"
+  | "invite_students"
+  | "submit_feedback"
+  | "update_assignment_type"
+  | "save_classroom_setup"
+  | "update_profile";
+
+export interface AuditLogEntry {
+  id: string;
+  action: AuditAction;
+  actorUid: string;
+  actorName?: string;
+  classroomId?: string;
+  classroomName?: string;
+  detail?: string;
+  createdAt: any;
+}
+
+export async function writeAuditLog(entry: Omit<AuditLogEntry, "id" | "createdAt">) {
+  try {
+    await addDoc(collection(db, "auditLogs"), {
+      ...entry,
+      createdAt: serverTimestamp(),
+    });
+  } catch (err) {
+    // Non-critical — swallow silently but warn
+    console.warn("[AuditLog] Failed to write audit entry:", err);
+  }
+}
+
+export function useAuditLog(classroomId?: string, limitCount = 30) {
+  const { authUser } = useAuth();
+  const [data, setData] = useState<AuditLogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authUser) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+
+    const constraints: any[] = classroomId
+      ? [where("classroomId", "==", classroomId), orderBy("createdAt", "desc")]
+      : [where("actorUid", "==", authUser.uid), orderBy("createdAt", "desc")];
+
+    const q = query(collection(db, "auditLogs"), ...constraints);
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setData(snapshot.docs.slice(0, limitCount).map((d) => ({ id: d.id, ...d.data() }) as AuditLogEntry));
+      setLoading(false);
+    }, () => setLoading(false));
+
+    return () => unsubscribe();
+  }, [authUser?.uid, classroomId, limitCount]);
+
+  return { data, loading };
+}
+
 // Generic hook to fetch a document
 export function useFirestoreDoc<T>(collectionName: string, docId?: string, defaultState: T | null = null) {
   const [data, setData] = useState<T | null>(defaultState);
@@ -383,31 +444,62 @@ export function useGroupMembers(classroomId?: string) {
   return { data, loading };
 }
 
-export async function createAssignment(input: Omit<ClassroomAssignment, "id" | "createdAt">) {
+export async function createAssignment(
+  input: Omit<ClassroomAssignment, "id" | "createdAt">,
+  meta?: { classroomName?: string; actorName?: string }
+) {
   await assertCanPublishAssignments(input.createdByUid);
   const normalizedTargetIds = Array.from(new Set((input.targetIds || []).map((item) => String(item).trim()).filter(Boolean)));
 
   const created = await addDoc(collection(db, "assignments"), {
     ...input,
+    classroomName: meta?.classroomName ?? "",
     targetIds: input.targetType === "classroom" ? [] : normalizedTargetIds,
     createdAt: serverTimestamp(),
   });
+
+  void writeAuditLog({
+    action: "create_assignment",
+    actorUid: input.createdByUid,
+    actorName: meta?.actorName,
+    classroomId: input.classroomId,
+    classroomName: meta?.classroomName,
+    detail: `สร้างงาน "${input.title}"`,
+  });
+
   return created.id;
 }
 
 export async function updateAssignmentTargetType(params: {
   assignmentId: string;
   targetType: "classroom" | "group" | "individual";
+  meta?: { actorUid?: string; actorName?: string; classroomId?: string; classroomName?: string };
 }) {
   await updateDoc(doc(db, "assignments", params.assignmentId), {
     targetType: params.targetType,
     updatedAt: serverTimestamp(),
   });
+
+  if (params.meta?.actorUid) {
+    void writeAuditLog({
+      action: "update_assignment_type",
+      actorUid: params.meta.actorUid,
+      actorName: params.meta.actorName,
+      classroomId: params.meta.classroomId,
+      classroomName: params.meta.classroomName,
+      detail: `เปลี่ยนประเภทงาน ${params.assignmentId} เป็น ${params.targetType === "classroom" ? "ทั้งห้อง" : params.targetType === "group" ? "งานกลุ่ม" : "งานเดี่ยว"}`,
+    });
+  }
 }
 
-export async function upsertSubmissionFeedback(submissionId: string, feedback: string, score: number) {
+export async function upsertSubmissionFeedback(
+  submissionId: string,
+  feedback: string,
+  score: number,
+  meta?: { actorUid?: string; actorName?: string; classroomId?: string; classroomName?: string }
+) {
   if (!Number.isFinite(score)) {
-    throw new Error("Score must be a number between 0 and 100");
+    throw new Error("คะแนนต้องเป็นตัวเลขระหว่าง 0–100");
   }
   const numericScore = Math.max(0, Math.min(100, Math.round(score)));
   await updateDoc(doc(db, "submissions", submissionId), {
@@ -416,6 +508,17 @@ export async function upsertSubmissionFeedback(submissionId: string, feedback: s
     status: "reviewed",
     reviewedAt: serverTimestamp(),
   });
+
+  if (meta?.actorUid) {
+    void writeAuditLog({
+      action: "submit_feedback",
+      actorUid: meta.actorUid,
+      actorName: meta.actorName,
+      classroomId: meta.classroomId,
+      classroomName: meta.classroomName,
+      detail: `ให้ feedback (score ${numericScore}) สำหรับ submission ${submissionId}`,
+    });
+  }
 }
 
 export async function getClassroomStudentProfiles(classroomId: string) {
@@ -569,6 +672,7 @@ export async function generateClassroomGroups(params: {
   membersPerGroup: number;
   requiredSkills: string[];
   aiSuggestedGroups?: Array<{ name: string; memberUids: string[]; reason?: string }>;
+  meta?: { classroomName?: string; actorName?: string };
 }) {
   await assertCanGenerateGroups(params.teacherUid);
   const students = await getClassroomStudentProfiles(params.classroomId);
@@ -665,6 +769,15 @@ export async function generateClassroomGroups(params: {
       updatedAt: Date.now(),
     });
   }
+
+  void writeAuditLog({
+    action: "generate_groups",
+    actorUid: params.teacherUid,
+    actorName: params.meta?.actorName,
+    classroomId: params.classroomId,
+    classroomName: params.meta?.classroomName,
+    detail: `จัดกลุ่ม ${groupCount} กลุ่ม (${memberCount} นิสิต) โหมด ${params.mode}`,
+  });
 
   return { groupCount, memberCount };
 }
@@ -872,7 +985,12 @@ export function calculateClassroomProgress(args: {
   };
 }
 
-export async function inviteStudentsByUid(classroomId: string, invitedByUid: string, studentUids: string[]) {
+export async function inviteStudentsByUid(
+  classroomId: string,
+  invitedByUid: string,
+  studentUids: string[],
+  meta?: { classroomName?: string; actorName?: string }
+) {
   const uniqueUids = Array.from(
     new Set(studentUids.map((uid) => uid.trim()).filter(Boolean))
   );
@@ -888,7 +1006,7 @@ export async function inviteStudentsByUid(classroomId: string, invitedByUid: str
   await runTransaction(db, async (transaction) => {
     const classroomSnap = await transaction.get(classroomRef);
     if (!classroomSnap.exists()) {
-      throw new Error("Classroom not found");
+      throw new Error("ไม่พบห้องเรียนนี้ในระบบ");
     }
 
     for (const studentUid of uniqueUids) {
@@ -903,6 +1021,7 @@ export async function inviteStudentsByUid(classroomId: string, invitedByUid: str
 
       transaction.set(enrollmentRef, {
         classroomId,
+        classroomName: meta?.classroomName ?? "",
         studentUid,
         source: "uid",
         invitedByUid,
@@ -919,6 +1038,17 @@ export async function inviteStudentsByUid(classroomId: string, invitedByUid: str
       });
     }
   });
+
+  if (created > 0) {
+    void writeAuditLog({
+      action: "invite_students",
+      actorUid: invitedByUid,
+      actorName: meta?.actorName,
+      classroomId,
+      classroomName: meta?.classroomName,
+      detail: `เพิ่มนิสิต ${created} คน (ข้าม ${skipped} ซ้ำ)`,
+    });
+  }
 
   return { created, skipped };
 }

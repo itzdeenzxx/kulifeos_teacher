@@ -94,7 +94,7 @@ const TeacherDashboard = () => {
         await updateDoc(doc(db, "teacherActivities", String(editId)), {
           name,
           description,
-          updatedAt: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
+          updatedAt: Date.now()
         });
         toast({ title: "อัปเดต Classroom สำเร็จ 🎉", description: "ข้อมูลห้องเรียนถูกแก้ไขแล้ว" });
       } else {
@@ -109,7 +109,9 @@ const TeacherDashboard = () => {
           students: 0,
           groups: 0,
           status: "waiting",
-          createdAt: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          isDemo: userProfile?.isGuest || false
         });
 
         const classroomCode = buildClassroomCodeFromId(createdDoc.id);
@@ -124,9 +126,10 @@ const TeacherDashboard = () => {
       
       setCreateOpen(false);
     } catch (error: any) {
+      console.error("Classroom Creation Error:", error);
       toast({
-        title: "เกิดข้อผิดพลาด",
-        description: error.message,
+        title: "เกิดข้อผิดพลาดในการสร้าง Classroom",
+        description: error.message || String(error),
         variant: "destructive"
       });
     } finally {
@@ -205,8 +208,15 @@ const TeacherDashboard = () => {
                       <div className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-[15px] font-bold text-foreground leading-tight">{activity.name}</h3>
-                            <p className="mt-1 text-[11px] text-muted-foreground">สร้างเมื่อ {activity.createdAt}</p>
+                            <h3 className="text-[15px] font-bold text-foreground leading-tight">
+                              {activity.name}
+                              {activity.isDemo && (
+                                <Badge variant="outline" className="ml-2 text-[10px] text-amber-600 bg-amber-50">Demo</Badge>
+                              )}
+                            </h3>
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                              สร้างเมื่อ {typeof activity.createdAt === 'number' ? new Date(activity.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : activity.createdAt}
+                            </p>
                           </div>
                           <ChevronRight className="h-4 w-4 text-muted-foreground/40 mt-1 flex-shrink-0" />
                         </div>
@@ -291,10 +301,15 @@ const TeacherDashboard = () => {
                         </DropdownMenu>
                       </div>
                       <Link to={`/classroom/${activity.id}`}>
-                        <h3 className="text-lg font-bold text-white leading-tight line-clamp-2 cursor-pointer hover:underline">
+                        <h3 className="text-lg font-bold text-white leading-tight line-clamp-2 cursor-pointer hover:underline flex items-center gap-2">
                           {activity.name}
+                          {activity.isDemo && (
+                            <Badge variant="outline" className="text-[10px] text-white border-white/50 bg-white/20">Demo</Badge>
+                          )}
                         </h3>
-                        <p className="mt-1 text-xs text-white/70">สร้างเมื่อ {activity.createdAt}</p>
+                        <p className="mt-1 text-xs text-white/70">
+                          สร้างเมื่อ {typeof activity.createdAt === 'number' ? new Date(activity.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : activity.createdAt}
+                        </p>
                       </Link>
                     </div>
                     <CardContent className="p-5">

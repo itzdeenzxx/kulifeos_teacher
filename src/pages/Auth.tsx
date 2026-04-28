@@ -100,15 +100,10 @@ const Auth = () => {
   useEffect(() => {
     if (userProfile && !authLoading) {
       if (userProfile.role !== "teacher") {
-<<<<<<< HEAD
-        signOut(auth);
-        setError("บัญชีนี้ถูกลงทะเบียนเป็นนิสิต กรุณาใช้งานผ่านแอปพลิเคชันสำหรับนิสิต");
-=======
         if (roleGuardTriggered) return;
         setRoleGuardTriggered(true);
         setError("บัญชีนี้ถูกลงทะเบียนเป็นนิสิต กรุณาใช้งานผ่านระบบนิสิต");
         void signOut(auth);
->>>>>>> d4904f5ef0e6ae453e47054cd4a6263a00d1ea02
         return;
       }
       if (userProfile.onboardingStep >= 1) {
@@ -171,10 +166,6 @@ const Auth = () => {
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
-<<<<<<< HEAD
-        await setDoc(userRef, newUser);
-        window.location.href = "/onboarding";
-=======
         try {
           await setDoc(userRef, newUser);
         } catch (error: unknown) {
@@ -184,7 +175,6 @@ const Auth = () => {
           persistLocalTeacherProfile({ uid: user.uid, email: user.email || "", onboardingStep: 1, ...verifyMeta });
         }
         navigate("/onboarding");
->>>>>>> d4904f5ef0e6ae453e47054cd4a6263a00d1ea02
       }
     } catch (err: unknown) {
       console.error("Login failed:", err);
@@ -345,13 +335,8 @@ const Auth = () => {
           persistLocalTeacherProfile({ uid: user.uid, email: "guest.teacher@ku.th", onboardingStep: 1, isGuest: true, isTeacherVerified: true, verificationStatus: "trusted-ku" });
         }
       }
-<<<<<<< HEAD
-      window.location.href = "/";
-    } catch (err: any) {
-=======
       navigate("/");
     } catch (err: unknown) {
->>>>>>> d4904f5ef0e6ae453e47054cd4a6263a00d1ea02
       console.error(err);
       setError("เกิดข้อผิดพลาดในการเข้าสู่ผู้เยี่ยมชม");
     } finally {

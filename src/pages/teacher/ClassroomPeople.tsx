@@ -15,7 +15,7 @@ import { inviteStudentsByUid, useClassroomEnrollments, useGroupMembers, useTeach
 
 const ClassroomPeople = () => {
   const { classroomId } = useParams();
-  const { authUser } = useAuth();
+  const { authUser, userProfile } = useAuth();
   const { toast } = useToast();
   const { data: teacherActivities = [] } = useTeacherActivities();
   const classroom = teacherActivities.find((item) => String(item.id) === String(classroomId));
@@ -35,22 +35,26 @@ const ClassroomPeople = () => {
       .filter(Boolean);
 
     if (parsedUids.length === 0) {
-      toast({ title: "UID Required", description: "Please provide at least 1 UID.", variant: "destructive" });
+      toast({ title: "ต้องระบุ UID", description: "กรุณาใส่ UID อย่างน้อย 1 รายการ", variant: "destructive" });
       return;
     }
 
     setInviting(true);
     try {
-      const result = await inviteStudentsByUid(classroomId, authUser.uid, parsedUids);
+      const teacherName = `${userProfile?.onboardingData?.title ?? ""} ${userProfile?.onboardingData?.fullName ?? ""}`.trim() || authUser.email || "";
+      const result = await inviteStudentsByUid(classroomId, authUser.uid, parsedUids, {
+        classroomName: classroom?.name,
+        actorName: teacherName,
+      });
       toast({
-        title: "Students Added",
-        description: `Added ${result.created} students, skipped ${result.skipped} duplicates.`,
+        title: "เพิ่มนิสิตสำเร็จ",
+        description: `เพิ่ม ${result.created} คน (ข้าม ${result.skipped} ซ้ำ)`,
       });
       setUidInput("");
       setUidInviteOpen(false);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unable to add students.";
-      toast({ title: "Add Failed", description: message, variant: "destructive" });
+      const message = error instanceof Error ? error.message : "เพิ่มนิสิตไม่สำเร็จ";
+      toast({ title: "เกิดข้อผิดพลาด", description: message, variant: "destructive" });
     } finally {
       setInviting(false);
     }

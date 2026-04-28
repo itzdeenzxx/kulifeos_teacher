@@ -153,9 +153,19 @@ service cloud.firestore {
       allow delete: if isTeacher();
     }
 
+    match /auditLogs/{logId} {
+      // Teachers can write audit entries for themselves; reads scoped to own entries
+      allow create: if isTeacher() && request.resource.data.actorUid == request.auth.uid;
+      allow read: if isTeacher() && (
+        resource.data.actorUid == request.auth.uid
+        || (resource.data.classroomId is string && isClassroomOwner(resource.data.classroomId))
+      );
+      allow update, delete: if false;
+    }
+
+    // Deny all access to unknown collections by default
     match /{document=**} {
-      allow read: if signedIn();
-      allow write: if false;
+      allow read, write: if false;
     }
   }
 }
