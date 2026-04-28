@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -9,10 +8,36 @@ export interface UserProfile {
   uid: string;
   email: string;
   role: "student" | "teacher";
+  isGuest?: boolean;
+  isTeacherVerified?: boolean;
+  verificationStatus?: "trusted-ku" | "verified-non-ku" | "unverified-non-ku";
   onboardingStep: number; // 0-3 for steps, 4 means completed
   onboardingData?: any;
   createdAt: number;
   updatedAt: number;
+}
+
+const FALLBACK_ROLE: UserProfile["role"] = "teacher";
+const FALLBACK_ONBOARDING_STEP = 1;
+
+function isFirestorePermissionError(error: unknown) {
+  const code = (error as { code?: string } | null)?.code || "";
+  const message = (error as { message?: string } | null)?.message || "";
+  return code.includes("permission-denied") || /insufficient permissions/i.test(message);
+}
+
+function createFallbackProfile(user: User): UserProfile {
+  const now = Date.now();
+  return {
+    id: user.uid,
+    uid: user.uid,
+    email: user.email || "",
+    role: FALLBACK_ROLE,
+    onboardingStep: FALLBACK_ONBOARDING_STEP,
+    onboardingData: {},
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
 // Global cache to prevent repeated fetching of the same user profile
@@ -23,7 +48,6 @@ export function useAuth() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     let isMounted = true;
@@ -62,7 +86,7 @@ export function useAuth() {
               data = userSnap.data() as UserProfile;
               localStorage.setItem(`ku_profile_${user.uid}`, JSON.stringify(data));
             }
-          } catch (fetchErr: any) {
+          } catch (fetchErr: unknown) {
             console.warn("Failed to fetch fresh profile from Firebase, trying local cache. Error:", fetchErr);
             const cachedParams = localStorage.getItem(`ku_profile_${user.uid}`);
             if (cachedParams) {
@@ -71,6 +95,8 @@ export function useAuth() {
               } catch (e) {
                 console.error("Failed to parse cached profile", e);
               }
+            } else if (isFirestorePermissionError(fetchErr)) {
+              data = createFallbackProfile(user);
             } else {
               throw fetchErr; // rethrow if no cache
             }
@@ -83,18 +109,27 @@ export function useAuth() {
             setUserProfile(data);
             localStorage.setItem("ku_current_user_id", user.uid);
           } else {
+<<<<<<< HEAD
             console.warn("User auth exists but Firestore profile not found. Waiting for profile to be created.");
             setUserProfile(null);
+=======
+            const fallback = createFallbackProfile(user);
+            globalCachedProfile = { uid: user.uid, profile: fallback };
+            setUserProfile(fallback);
+            localStorage.setItem(`ku_profile_${user.uid}`, JSON.stringify(fallback));
+            localStorage.setItem("ku_current_user_id", user.uid);
+>>>>>>> d4904f5ef0e6ae453e47054cd4a6263a00d1ea02
           }
         } else {
           globalCachedProfile = null;
           setUserProfile(null);
           localStorage.removeItem("ku_current_user_id");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!isMounted) return;
         console.error("Auth error:", err);
-        setError(err.message);
+        const message = (err as { message?: string } | null)?.message || "Authentication failed";
+        setError(message);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -104,7 +139,7 @@ export function useAuth() {
       isMounted = false;
       unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   return {
     authUser,

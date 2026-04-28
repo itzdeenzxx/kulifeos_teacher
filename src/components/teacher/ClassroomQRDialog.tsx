@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Copy, Download, Sparkles, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +9,12 @@ import { motion, AnimatePresence } from "framer-motion";
 interface ClassroomQRDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  classroom: { id: number; name: string } | null;
+  classroom: {
+    id: string | number;
+    name: string;
+    classroomCode?: string;
+    joinPath?: string;
+  } | null;
 }
 
 const confettiColors = [
@@ -61,8 +66,11 @@ export function ClassroomQRDialog({ open, onOpenChange, classroom }: ClassroomQR
 
   if (!classroom) return null;
 
-  const joinUrl = `${window.location.origin}/join/${classroom.id}`;
-  const classroomCode = `KU-${String(classroom.id).padStart(4, "0")}`;
+  const studentAppBaseUrl =
+    (import.meta.env.VITE_STUDENT_APP_URL as string | undefined)?.replace(/\/$/, "") || window.location.origin;
+  const joinPath = classroom.joinPath || `/join/${classroom.id}`;
+  const joinUrl = `${studentAppBaseUrl}${joinPath}`;
+  const classroomCode = classroom.classroomCode || `KU-${String(classroom.id).toUpperCase().slice(0, 6)}`;
 
   const handleOpen = (isOpen: boolean) => {
     if (isOpen) {
@@ -104,6 +112,12 @@ export function ClassroomQRDialog({ open, onOpenChange, classroom }: ClassroomQR
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogContent className="overflow-hidden sm:max-w-md rounded-3xl border-0 p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Invite Students to Classroom</DialogTitle>
+          <DialogDescription>
+            แชร์ QR code, classroom code หรือ link เพื่อให้นิสิตเข้าร่วมห้องเรียน
+          </DialogDescription>
+        </DialogHeader>
         {/* Confetti */}
         <AnimatePresence>
           {showConfetti && (

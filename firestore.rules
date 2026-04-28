@@ -1,0 +1,161 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function hasUserDoc(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function currentRole() {
+      return hasUserDoc(request.auth.uid) ? userDoc(request.auth.uid).data.role : null;
+    }
+
+    function isTeacher() {
+      return signedIn() && currentRole() == "teacher";
+    }
+
+    function isVerifiedTeacherOrGuest() {
+      return isTeacher()
+        && hasUserDoc(request.auth.uid)
+        && (
+          userDoc(request.auth.uid).data.isGuest == true
+          || userDoc(request.auth.uid).data.isTeacherVerified == true
+          || userDoc(request.auth.uid).data.verificationStatus == "trusted-ku"
+          || userDoc(request.auth.uid).data.verificationStatus == "verified-non-ku"
+        );
+    }
+
+    function isStudent() {
+      return signedIn() && currentRole() == "student";
+    }
+
+    function classroomOwnerId(classroomId) {
+      return get(/databases/$(database)/documents/teacherActivities/$(classroomId)).data.ownerId;
+    }
+
+    function isClassroomOwner(classroomId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/teacherActivities/$(classroomId))
+        && classroomOwnerId(classroomId) == request.auth.uid;
+    }
+
+    function myEnrollmentId(classroomId) {
+      return classroomId + "_" + request.auth.uid;
+    }
+
+    function isClassMember(classroomId) {
+      return signedIn() && exists(/databases/$(database)/documents/classroomEnrollments/$(myEnrollmentId(classroomId)));
+    }
+
+    match /users/{uid} {
+      allow create: if isSelf(uid) && request.resource.data.uid == uid;
+      allow read: if isSelf(uid) || isTeacher();
+      allow update: if isSelf(uid);
+      allow delete: if false;
+    }
+
+    match /teacherActivities/{classroomId} {
+      allow read: if signedIn();
+      allow create: if isTeacher()
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isTeacher()
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /classroomEnrollments/{enrollmentId} {
+      allow read: if signedIn()
+        && (resource.data.studentUid == request.auth.uid || isTeacher());
+
+      allow create: if signedIn()
+        && request.resource.data.classroomId is string
+        && request.resource.data.studentUid is string
+        && (
+          (isStudent() && request.resource.data.studentUid == request.auth.uid)
+          || (isTeacher() && isClassroomOwner(request.resource.data.classroomId))
+        );
+
+      allow update, delete: if isTeacher()
+        && isClassroomOwner(resource.data.classroomId);
+    }
+
+    match /assignments/{assignmentId} {
+      allow read: if signedIn()
+        && (isTeacher() || isClassMember(resource.data.classroomId));
+
+      allow create: if isVerifiedTeacherOrGuest()
+        && isClassroomOwner(request.resource.data.classroomId);
+
+      allow update, delete: if isTeacher()
+        && isClassroomOwner(resource.data.classroomId);
+    }
+
+    match /submissions/{submissionId} {
+      allow read: if signedIn()
+        && (
+          (isTeacher() && isClassroomOwner(resource.data.classroomId))
+          || isClassMember(resource.data.classroomId)
+        );
+
+      allow create: if isStudent()
+        && request.resource.data.studentUid == request.auth.uid
+        && isClassMember(request.resource.data.classroomId);
+
+      allow update: if signedIn()
+        && (
+          (isStudent()
+            && resource.data.studentUid == request.auth.uid
+            && request.resource.data.studentUid == request.auth.uid)
+          || (isTeacher() && isClassroomOwner(resource.data.classroomId))
+        );
+
+      allow delete: if isTeacher() && isClassroomOwner(resource.data.classroomId);
+    }
+
+    match /groups/{groupId} {
+      allow read: if signedIn()
+        && (isTeacher() || isClassMember(resource.data.classroomId));
+      allow create: if isVerifiedTeacherOrGuest()
+        && isClassroomOwner(request.resource.data.classroomId);
+      allow update, delete: if isVerifiedTeacherOrGuest()
+        && isClassroomOwner(resource.data.classroomId);
+    }
+
+    match /groupMembers/{memberId} {
+      allow read: if signedIn()
+        && (isTeacher() || isClassMember(resource.data.classroomId));
+      allow create: if isVerifiedTeacherOrGuest()
+        && isClassroomOwner(request.resource.data.classroomId);
+      allow update, delete: if isVerifiedTeacherOrGuest()
+        && isClassroomOwner(resource.data.classroomId);
+    }
+
+    match /projectSpaces/{spaceId} {
+      allow read: if signedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /community_posts/{postId} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update: if signedIn();
+      allow delete: if isTeacher();
+    }
+
+    match /{document=**} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+  }
+}

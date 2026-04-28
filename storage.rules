@@ -1,0 +1,43 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return firestore.get(/databases/(default)/documents/users/$(uid));
+    }
+
+    function isTeacher() {
+      return signedIn() && userDoc(request.auth.uid).data.role == "teacher";
+    }
+
+    function isClassMember(classroomId) {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/classroomEnrollments/$(classroomId + "_" + request.auth.uid));
+    }
+
+    match /users/{uid}/avatar {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /submissions/{classroomId}/{assignmentId}/{studentUid}/{fileName} {
+      allow read: if signedIn()
+        && (
+          request.auth.uid == studentUid
+          || isTeacher()
+          || isClassMember(classroomId)
+        );
+      allow write: if signedIn()
+        && request.auth.uid == studentUid
+        && isClassMember(classroomId);
+    }
+
+    match /{allPaths=**} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+  }
+}
